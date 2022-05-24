@@ -25,7 +25,7 @@ url: "https://jehyunjung.github.io/"
 baseurl: # the subpath of your site, e.g. "/blog"
 repository: "https://github.com/JehyunJung/JehyunJung.github.io"
 teaser: # path of fallback teaser image, e.g. "/assets/images/500x300.png"
-logo: # path of logo image to display in the masthead, e.g. "/assets/images/88x88.png"
+logo: #
 masthead_title: "여유로움 속에 성실한 Developer"
 # breadcrumbs            : false # true, false (default)
 words_per_minute: 200
@@ -102,7 +102,7 @@ analytics:
 # Site Author
 author:
   name: "Jehyun Jung"
-  avatar: # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
+  avatar: "/assets/images/profile.jpg"
   bio: "Slowly Developing Myself"
   location: "Republic Of Korea"
   email:
