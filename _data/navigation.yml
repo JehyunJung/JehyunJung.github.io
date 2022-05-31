@@ -3,7 +3,7 @@ main:
   - title: "About Me"
     url: /about/
   - title: "T.I.L"
-    url: /categories/til/
+    url: /category/til/
   - title: "Projects"
     url: /projects/
   - title: "DevLog"
