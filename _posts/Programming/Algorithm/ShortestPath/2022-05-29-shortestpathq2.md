@@ -16,6 +16,7 @@ NxN 공간이 존재할때, 각각의 칸을 지나기 위해서 드는 비용�
 그러면 자연스럽게 문제는 dijkstra 알고리즘을 해결하는 것이 가능하다.
 
 ## Solution
+
 ```python
 import heapq
 from math import inf

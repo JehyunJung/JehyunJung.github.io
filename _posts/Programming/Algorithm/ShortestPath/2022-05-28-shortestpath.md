@@ -25,6 +25,7 @@ for adj_node,weight in graph[node]:
     distance[adj_node] = distance[node] + weight:
 ```
 >Source
+
 ```python
 import math, heapq
 def dijkstra_path(graph,n,start_vertex,end_vertex):
@@ -65,6 +66,7 @@ for k in range(n):
         distance[a][b] = distance[a][k] + distance[k][b]:
 ```
 >Source
+
 ```python
 def floyd_warshall_path(graph,n):
   distance=[[math.inf] * (n+1) for _ in range(n+1)]
