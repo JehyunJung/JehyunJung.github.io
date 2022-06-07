@@ -9,7 +9,7 @@ tags:
   - codetest
   - boj
 ---
-# [BOJ] Q18406
+# [BOJ] Q18406 럭키 스트레이트
 ## [Question](https://www.acmicpc.net/problem/18406)
 ## Language: Python
 ## Difficulty: Bronze 2
