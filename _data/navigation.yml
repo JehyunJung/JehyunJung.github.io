@@ -7,7 +7,7 @@ main:
   - title: "Projects"
     url: /projects/
   - title: "DevLog"
-    url: /categories/
+    url: /tags/
   # - title: "About"
   #   url: https://mmistakes.github.io/minimal-mistakes/about/
   # - title: "Sample Posts"
