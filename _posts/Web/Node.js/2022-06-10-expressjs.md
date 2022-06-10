@@ -1,6 +1,6 @@
 ---
 title: "Node.js"
-excerpt: "Express.js을 이용한 node.js 서버 구성 part 1"
+excerpt: "Express.js을 이용한 node.js 서버 구성"
 
 categories:
   - Web
