@@ -151,4 +151,4 @@ link: [node.js](https://www.youtube.com/watch?v=jTct6U8VV5E&list=PLuHgQVnccGMCHj
 
 link: [node.js doc](https://nodejs.org/dist/latest-v16.x/docs/api/)
 
-link: [cookie](https://developer.mozilla.org/ko/docs/Web/HTTP/Cookies)
+link: [mysql-express-session](https://www.npmjs.com/package/express-mysql-session)
