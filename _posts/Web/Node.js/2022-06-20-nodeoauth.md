@@ -105,8 +105,8 @@ AccessToken은 정해진 사용 기한이 있다. AccessToken이 정해진 기�
 > Renew Access Token
 
 ```bash
-curl -X GET https://auth.clova.ai/token?grant_type=refresh_token?client_id=c2Rmc2Rmc2FkZ2Fasdkjh234zZnNhZGZ&client_secret=66qo65asdfasdfaA7JasdfasfOqwnOq1rOyfgeydtCDrvYasfasf%3D&model_id=test_model&refresh_token=GW-Ipsdfasdfdfs3IbHFBA \
-  -H 'Accept: application/json'
+curl -X GET "https://auth.clova.ai/token?grant_type=refresh_token?client_id=c2Rmc2Rmc2FkZ2Fasdkjh234zZnNhZGZ&client_secret=66qo65asdfasdfaA7JasdfasfOqwnOq1rOyfgeydtCDrvYasfasf%3D&model_id=test_model&refresh_token=GW-Ipsdfasdfdfs3IbHFBA \
+  -H 'Accept: application/json'"
 ```
 
 다음과 같이 client_id,client_secret,model_id,refresh_token 등의 정보를 제공하게 되면 아래와 같은 Access Token을 새로 받게 된다.
