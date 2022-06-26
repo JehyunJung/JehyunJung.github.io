@@ -1,6 +1,6 @@
 ---
 title: "Node.js"
-excerpt: "Node.js Sequelize ORM"
+excerpt: "Node.js Sequelize ORM Configuration"
 
 categories:
   - Web
