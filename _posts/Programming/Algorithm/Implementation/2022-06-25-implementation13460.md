@@ -8,6 +8,7 @@ tags:
   - implementation
   - codetest
   - boj
+  - bfs
 ---
 # [BOJ] Q13460 구슬 탈출 2
 ## [Question](https://www.acmicpc.net/problem/13460)

@@ -8,6 +8,7 @@ tags:
   - implementation
   - codetest
   - boj
+  - itertools
 ---
 # [BOJ] Q16943 숫자 재배치
 ## [Question](https://www.acmicpc.net/problem/16943)

@@ -10,6 +10,7 @@ tags:
   - codetest
   - Programmers
   - implementation
+  - bfs
 ---
 # [Programmers] 퍼즐 조각 채우기
 ## [Question](https://programmers.co.kr/learn/courses/30/lessons/84021)

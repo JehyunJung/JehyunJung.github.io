@@ -8,6 +8,7 @@ tags:
   - implementation
   - codetest
   - boj
+  - bfs
 ---
 # [BOJ] Q16236 아기상어
 ## [Question](https://www.acmicpc.net/problem/16236)
