@@ -8,6 +8,7 @@ tags:
   - implementation
   - codetest
   - boj
+  - prefix sum
 ---
 # [BOJ] Q14889 스타트와 링크
 ## [Question](https://www.acmicpc.net/problem/14889)
