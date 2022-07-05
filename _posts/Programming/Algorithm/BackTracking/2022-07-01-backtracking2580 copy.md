@@ -1,6 +1,6 @@
 ---
 title: "[BOJ] Q2580 스도쿠"
-excerpt: "Implementation"
+excerpt: "BackTracking"
 
 categories:
   - codetest
