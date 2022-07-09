@@ -1,6 +1,6 @@
 ---
 title: "[Programmers] P17678 셔틀버스 "
-excerpt: "2018 카카오 공채 문제 4"
+excerpt: "2018 카카오 공채 1차 문제 4"
 
 categories:
   - codetest

@@ -1,6 +1,6 @@
 ---
 title: "[Programmers] P17677 뉴스 클러스터링 "
-excerpt: "2018 카카오 공채 문제 5"
+excerpt: "2018 카카오 공채 1차 문제 5"
 
 categories:
   - codetest

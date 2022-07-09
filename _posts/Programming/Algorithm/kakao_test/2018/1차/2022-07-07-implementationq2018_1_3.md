@@ -1,6 +1,6 @@
 ---
 title: "[Programmers] P17680 캐시 "
-excerpt: "2018 카카오 공채 문제 3"
+excerpt: "2018 카카오 공채 1차 문제 3"
 
 categories:
   - codetest

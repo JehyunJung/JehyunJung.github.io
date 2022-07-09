@@ -1,6 +1,6 @@
 ---
 title: "[Programmers] P17681 비밀지도 "
-excerpt: "2018 카카오 공채 문제 1"
+excerpt: "2018 카카오 공채 1차 문제 1"
 
 categories:
   - codetest

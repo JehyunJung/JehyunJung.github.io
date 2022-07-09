@@ -1,6 +1,6 @@
 ---
 title: "[Programmers] P17682 다트 게임 "
-excerpt: "2018 카카오 공채 문제 2"
+excerpt: "2018 카카오 공채 1차 문제 2"
 
 categories:
   - codetest

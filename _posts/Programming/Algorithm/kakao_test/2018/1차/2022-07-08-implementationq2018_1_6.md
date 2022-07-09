@@ -1,6 +1,6 @@
 ---
 title: "[Programmers] P17679 프렌즈4블록"
-excerpt: "2018 카카오 공채 문제 6"
+excerpt: "2018 카카오 공채 1차 문제 6"
 
 categories:
   - codetest
