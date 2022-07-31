@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P72411 신규 아이디 추천
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P72411)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/72411)
 ## Language: Python
 
 처음 주어진 조합 개수에 따라 세트로 만들 음식의 조합들을 구해서, 각가의 사람들이 주문 단품 목록 중에 세트 음식이 포함되는 사람의 명수를 구하는 방향으로 진행하려 했다. 

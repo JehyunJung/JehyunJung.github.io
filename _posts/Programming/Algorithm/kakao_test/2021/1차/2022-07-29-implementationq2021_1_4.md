@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P72413 합승 택시 요금
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P72413)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/72413)
 ## Language: Python
 
 특정 구간 까지는 같이 합승을 하고, 이후에는 각자의 도착지로 가는 데, 이때의 최소 경로를 구하는 문제이다.

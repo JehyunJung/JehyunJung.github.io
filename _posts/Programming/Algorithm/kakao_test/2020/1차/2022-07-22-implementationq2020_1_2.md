@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P60058 괄호 변환
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P60058)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/60058)
 ## Language: Python
 
 ## Solution

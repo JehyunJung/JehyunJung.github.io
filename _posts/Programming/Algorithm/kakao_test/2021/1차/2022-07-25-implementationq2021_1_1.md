@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P72410 신규 아이디 추천
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P72410)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/72410)
 ## Language: Python
 
 주어진 아이디 추천 알고리짐에 따라 아이디 필터링을 수행한다.

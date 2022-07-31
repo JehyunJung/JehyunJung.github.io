@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P60060 가사 검색
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P60060)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/60060)
 ## Language: Python
 
 ## Solution

@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P60059 자물쇠와 열쇠
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P60059)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/60059)
 ## Language: Python
 
 ## Solution

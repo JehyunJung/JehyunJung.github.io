@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P60063 블록 이동하기
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P60063)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/60063)
 ## Language: Python
 
 주어진 문제는 기존의 최단 경로 찾기를 응용한 문제이다. 로봇의 위치는 한개의 좌표가 아닌 2개의 좌표로 나타낸다.

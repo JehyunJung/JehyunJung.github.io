@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P60061 기둥과 보 설치
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P60061)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/60061)
 ## Language: Python
 
 build_frame을 통해 주어진 건축 시공 과정에 따라, 건축할 수 있으면, 건축하고, 그렇지 않은 경우 해당 과정을 무시하면서 건축을 이어나간다.

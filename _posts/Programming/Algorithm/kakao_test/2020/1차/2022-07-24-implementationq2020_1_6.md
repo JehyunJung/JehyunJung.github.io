@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P60062 외벽 점검
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P60062)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/60062)
 ## Language: Python
 
 각각의 취약점 위치에 대해서 친구들로 하여금 점검을 하려고 한다.

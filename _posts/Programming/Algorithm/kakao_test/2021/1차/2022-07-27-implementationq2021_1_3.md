@@ -11,7 +11,7 @@ tags:
   - kakao
 ---
 # [Programmers] P72412 순위 검색
-## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/P72412)
+## [Question](https://school.programmers.co.kr/learn/courses/30/lessons/72412)
 ## Language: Python
 
 해당 문제는 정확성과 효율성 모두를 만족해야하는 문제로 시간 복잡도가 최대 O(N) 을 넘어가서는 안된다.
