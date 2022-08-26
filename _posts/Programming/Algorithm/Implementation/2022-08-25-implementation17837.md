@@ -9,6 +9,7 @@ tags:
   - codetest
   - boj
   - samsung
+  - try_again
 ---
 # [BOJ] Q17837 새로운 게임2
 ## [Question](https://www.acmicpc.net/problem/17837)
