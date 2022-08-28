@@ -38,7 +38,7 @@ tags:
 > etcd
 
     - key:value 형태의 저장소이다. worker node에 대한 정보를 저장하고 있다. kubelet(k8s 데몬)을 통해 수집된 worker node에 대한 정보를 저장하게 된다.
-    - 추가로, kubectl 명령어를 실행시킨 container 관련 정보도 가지고 있다.
+    - 추가로, kubectl 명령어를 실행시킨 container 관련 정보도 가지고 있다. 가령, deploy를 생성하게 되면, 해당 deployment의 변수 정보를 etcd를 통해 보관하게 된다.
 
 > kube-apiserver
 
@@ -65,7 +65,7 @@ tags:
 
 > container runtime
 
-    - container의 실행시키는 엔진으로, 대표적으로 docker을 사용하게 된다.
+    - container를 실행시키는 엔진으로, 대표적으로 docker을 사용하게 된다.
     - docker, containerd, runc 
 
 ### etc
