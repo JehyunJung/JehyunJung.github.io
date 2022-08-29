@@ -403,6 +403,197 @@ smlinux/unhealthy 이미지는 처음 5번의 요청에 대해서는 정상 응�
 
 self-healing은 위와 같이 동작하는 것을 확인할 수 있다.
 
+## Init Container
+
+![init_container](/assets/images/kubernetes/kubernetes_init_container.jpg)
+
+위와 같이 pod에 init container을 구성하게 되면, init container가 정상적으로 동작을 수행하기 전까지는 main container을 실행하지 않는다. 이 처럼, 메인 로직을 수행하기 전에 사전에 환경을 구성해야하는 경우 init-container 개념을 이용한다.
+
+> myapp-pod.yaml
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app.kubernetes.io/name: MyApp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    command: ['sh', '-c', 'echo The app is running! && sleep 3600']
+  initContainers:
+  - name: init-myservice
+    image: busybox:1.28
+    command: ['sh', '-c', "until nslookup myservice.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice; sleep 2; done"]
+  - name: init-mydb
+    image: busybox:1.28
+    command: ['sh', '-c', "until nslookup mydb.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done"]
+```
+
+위와 같이 init-conatiner에서는 아래의 명령어를 수행하게 되는데, 해당 명령어들은 특정 서비스가 완료되기 전까지 무한 루핑을 진행하게 된다. 해당 서비스가 올라와야, 정상적으로 명령어 실행이 완료되고, 이에 따라 init-container 실행도 완료된다.
+
+### Practice
+
+#### Pod Create
+
+> init-myservice
+
+```shell
+until nslookup myservice.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice; sleep 2; done
+```
+
+> init-mydb
+
+```shell
+until nslookup mydb.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done
+```
+
+![get_pod_init_container](/assets/images/kubernetes/init_container_get_pods.png)
+
+위와 같이, init container의 실행을 대기하는 것을 확인할 수 있다.
+
+#### init services for init container
+
+그러면, init container가 정상적으로 실행될 수 있도록, container에 서비스들을 실행해보자.
+
+우선, myservice를 먼저 실행해보자
+
+> myservice-yaml
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: myservice
+spec:
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 9376
+```
+
+```shell
+kubectl create -f myservice-yaml
+```
+
+해당 서비스를 정상적으로 실행하고 나게 되면 아래와 같이 init-container 2개중 1개가 running 되는 것을 알 수 있다.
+
+
+![init_myservice](/assets/images/kubernetes/init_myservice.jpg)
+
+마찬가지로, mydb service에 대해서도 실행을 해보자
+
+> mydb-yaml
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mydb
+spec:
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 9377
+```
+
+```shell
+kubectl create -f mydb-yaml
+```
+
+init container가 모두 정상적으로 실행되고 나니, main-container가 정상적으로 실행되는 것을 확인할 수 있다.
+
+![init_mydb](/assets/images/kubernetes/init_mydb.jpg)
+
+## Infra Container
+
+pod를 생성하게 되면 아래의 그림처럼 pod 에는 container가 1개만 동작하는 것으로 알고 있다.
+
+```shell
+kubectl run webserver --image=nginx:1.14 --port 80
+```
+
+![pod_container](/assets/images/kubernetes/pod_container.jpg)
+
+하지만, 실제로보면 기본으로 생성되는 container가 있는데, 이를 pause container라고 하며 이는 infra container이다. 이 container는 pod에 대한 infra 정보를 관리하게 된다. ip, port와 같은 정보가 이에 해당된다.
+
+![pause_container](/assets/images/kubernetes/pause_container.jpg)
+
+실제로 pause container가 생성되는 지 알아보기 위해, 해당 pod를 실행시키고 있는 node에 접속해서, 확인해본다.
+
+> ps 명령어를 통해 실행 중인 컨테이너 확인
+
+```shell
+ps aux
+```
+
+![ps_aux_pause_container](/assets/images/kubernetes/ps_aux_pause_container.png)
+
+## Static Pod
+
+pod는 기본적으로 control plane, master node에 kubectl 명령어를 이용해서 pod 생성 요청을 통해 생성된다. 이에 따라, api 서버에서 kubectl 명령어를 받아서, etcd에 저장되어 있는 정보에 따라 scheduler가 적절 worker node에 pod를 실행하게 된다.
+
+하지만, static pod는 이와 다르게 동작하게 된다. 우선, api 서버로의 요청을 진행하지 않는다. 
+
+worker node 별로 kubelet이 관리하는 static directory가 있는데, 해당 directory에 yaml 파일을 추가하게 되면, kubelet는 이를 보고 static pod 를 생성하게 된다. yaml 파일을 삭제하게 되면 저절로 pod를 삭제한다.
+
+정리해보면,api 서버 없이 kubelet 데몬에 의해서 관리되는 pod를 static pod라고 한다.
+
+> static directory
+
+/var/lib/kubernetes/config.yaml 파일을 살펴보게 되면, kubernetes의 환경설정을 확인할 수 있다.
+
+```yaml
+toojey-node1@toojeynode1-VirtualBox:~$ sudo cat /var/lib/kubelet/config.yaml
+apiVersion: kubelet.config.k8s.io/v1beta1
+...
+staticPodPath: /etc/kubernetes/manifests
+...
+```
+
+해당 파일을 자세히 보면, staticPodPath라는 변수에 대한 부분이 있는데, 이게 해당 노드에 설정되어 있는 static directory이다.
+
+### static pod 생성 예제
+
+node1의 /etc/kubernetes/manifests 폴더에 아래의 yaml 파일을 추가해보자
+
+> nginx.yaml
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+spec:
+  containers:
+    - image: nginx:1.14
+      name: nginx
+      ports: 
+        - containerPort: 80
+          protocol: TCP
+```
+
+해당 파일을 추가하는 것만으로도 아래의 get-pod 결과를 살펴보면 pod가 node1에서 실행되는 것을 확인할 수 있다. 또한, 해당 파일을 삭제하게 되면 pod가 terminate 되는 것도 확인할 수 있다.
+
+![static_pod_node1](/assets/images/kubernetes/static_pod_node1.png)
+
+![static_pod_master](/assets/images/kubernetes/static_pod_master_node.png)
+
+### master의 static directory
+
+```shell
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ ls /etc/kubernetes/manifests/
+etcd.yaml  kube-apiserver.yaml  kube-controller-manager.yaml  kube-scheduler.yaml
+```
+
+master node의 static directory를 보면 위와 같이 yaml 파일들을 확인할 수 있는데, 이들은 master node에서 구동되는 component이다. 이를 통해, 해당 component들이 static pod 형태로 구동되는 것을 확인할 수 있다.
+
+
+
+
+
 
 ## References
 
