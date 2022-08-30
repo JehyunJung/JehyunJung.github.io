@@ -283,12 +283,11 @@ public Advisor advisor2(LogTrace logTrace) {
 
 ```java
 @Bean
-public Advisor advisor2(LogTrace logTrace) {
+public Advisor advisor3(LogTrace logTrace) {
     AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
     pointcut.setExpression("execution(* hello.proxy.app..*(..)) && !execution(* hello.proxy.app..noLog(..))");
     LogTraceAdvice advice = new LogTraceAdvice(logTrace);
     return new DefaultPointcutAdvisor(pointcut, advice);
-
 }
 ```
 
