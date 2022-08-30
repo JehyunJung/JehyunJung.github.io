@@ -432,11 +432,11 @@ spec:
     command: ['sh', '-c', "until nslookup mydb.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for mydb; sleep 2; done"]
 ```
 
-위와 같이 init-conatiner에서는 아래의 명령어를 수행하게 되는데, 해당 명령어들은 특정 서비스가 완료되기 전까지 무한 루핑을 진행하게 된다. 해당 서비스가 올라와야, 정상적으로 명령어 실행이 완료되고, 이에 따라 init-container 실행도 완료된다.
-
 ### Practice
 
 #### Pod Create
+
+위의 yaml에 따르면 init-conatiner에서는 아래의 명령어들을 수행하게 되는데, 해당 명령어들은 특정 서비스가 완료되기 전까지 무한 루핑을 진행하게 된다. 해당 서비스가 올라와야, 정상적으로 명령어 실행이 완료되고, 이에 따라 init-container 실행도 완료된다.
 
 > init-myservice
 
@@ -509,11 +509,11 @@ init container가 모두 정상적으로 실행되고 나니, main-container가 
 
 ## Infra Container
 
-pod를 생성하게 되면 아래의 그림처럼 pod 에는 container가 1개만 동작하는 것으로 알고 있다.
-
 ```shell
 kubectl run webserver --image=nginx:1.14 --port 80
 ```
+
+pod를 생성하게 되면 아래의 그림처럼 pod 에는 container가 1개만 동작하는 것으로 알고 있다.
 
 ![pod_container](/assets/images/kubernetes/pod_container.jpg)
 
@@ -533,7 +533,7 @@ ps aux
 
 ## Static Pod
 
-pod는 기본적으로 control plane, master node에 kubectl 명령어를 이용해서 pod 생성 요청을 통해 생성된다. 이에 따라, api 서버에서 kubectl 명령어를 받아서, etcd에 저장되어 있는 정보에 따라 scheduler가 적절 worker node에 pod를 실행하게 된다.
+pod는 기본적으로 control plane, master node에 kubectl 명령어를 이용해서 pod 생성 요청을 통해 생성된다. 이에 따라, api 서버에서 kubectl 명령어를 받아서, etcd에 저장되어 있는 정보에 따라 scheduler가 적절한 worker node를 할당해서 pod를 실행하게 된다.
 
 하지만, static pod는 이와 다르게 동작하게 된다. 우선, api 서버로의 요청을 진행하지 않는다. 
 
@@ -588,12 +588,133 @@ toojey-master@toojeymaster-VirtualBox:~/kubernetes$ ls /etc/kubernetes/manifests
 etcd.yaml  kube-apiserver.yaml  kube-controller-manager.yaml  kube-scheduler.yaml
 ```
 
-master node의 static directory를 보면 위와 같이 yaml 파일들을 확인할 수 있는데, 이들은 master node에서 구동되는 component이다. 이를 통해, 해당 component들이 static pod 형태로 구동되는 것을 확인할 수 있다.
+master node의 static directory를 보면 위와 같이 yaml 파일들을 확인할 수 있는데, 이들은 master node에서 구동되는 component이다. 이를 통해, master node의 component들이 static pod 형태로 구동되는 것을 확인할 수 있다.
 
+## Pod Resource 할당
 
+1. limit (최대 리소스양)
+pod도 cpu,memory와 같은 system resource를 할당받아서 사용한다. 만약, resource limit을 제한하지 않게 되면, 특정 pod는 system resource를 모두 다 사용하는 경우가 발생할 수 있다. limit는 이러한 시스템 자원에 대해 최대 사용량을 지정하는 것이다.
 
+2. request (최소 리소스양)
+이는, pod를 실행할 worker node를 할당하게 될때, system resource에 대한 최소 여유량을 정의하는 것이다. 이는, system resource가 부족한 worker node에 pod를 배치 하는 것을 방지하는 역할을 한다. 최소 자원 요구량을 request 함으로써, scheduler는 worker node 중에 해당 요구량 이상의 자원을 가지고 있는 worker node를 찾아서 pod를 해당 노드에 할당하게 된다.
 
+### Kubernetes resource 단위 표현법
 
+- Memory
+memory는 Ki/Mi/Gi 단위로 표현하게 된다.
+
+- Cpu
+cpu는 core 개수로 표현하게 된다.
+
+![cpu_resource](/assets/images/kubernetes/cpu_resource.jpg)
+
+코어 단위로 표현하게 되는데, 1 core는 1000 mili core이다.
+
+cpu는 코어 개수, 혹은 mili core 단위로 사용한다.
+
+### Practice
+
+> nginx-resource.yaml
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod-resource
+spec:
+  containers:
+    - image: nginx:1.14
+      name: nginx
+      ports: 
+        - containerPort: 80
+          protocol: TCP 
+      resources:
+        requests:
+          cpu: 200m
+          memory: 250Mi
+        limits:
+          cpu: 1
+          memory: 500Mi
+```
+
+위의 yaml를 토대로 pod를 생성해서 describe를 통해 pod 정보를 살펴보면 아래와 같이 resource 정보가 할당된 것을 확인할 수 있다.
+
+![describe_resources](/assets/images/kubernetes/describe_resources.jpg)
+
+만약, system resources를 넘어서도록 system resourec를 설정해서 pod를 생성하면 어떻게 될까?
+
+> nginx-resource-over.yaml
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod-over-resources
+spec:
+  containers:
+    - image: nginx:1.14
+      name: nginx-container
+      ports: 
+        - containerPort: 80
+          protocol: TCP 
+      resources:
+        requests:
+          cpu: 4
+          memory: 250Mi
+
+```
+
+아래와 같이 pod를 실행할 node를 찾지 못해서, 계속해서 pending 상태를 유지하게 된다.
+
+```shell
+NAME                       READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+nginx-pod-over-resources   0/1     Pending   0          0s    <none>   <none>   <none>           <none>
+nginx-pod-over-resources   0/1     Pending   0          0s    <none>   <none>   <none>           <none>
+```
+
+## Pod 환경 변수
+
+container을 실행하게 되면, 해당 container 내부에는 환경변수를 가지고 있다. 이는 기존의 Linux, Windows에서 저장하는 환경변수와 동일한 개념이다. 우리는 pod를 실행하게 될 때, yaml 파일에 환경변수를 지정함으로써, 새로운 환경변수를 추가할 수 있고, 또는 기존의 환경변수의 값을 재정의할수도 있다.
+
+> nginx-env
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod-env
+spec:
+  containers:
+    - image: nginx:1.14
+      name: nginx-container
+      ports: 
+        - containerPort: 80
+          protocol: TCP 
+      env:
+      - name: MYVAR
+        value: "testValue"
+```
+아래와 같이 해당 container에 접속해서, env 목록을 살펴보면 위에서 설정한 환경변수가 추가되어 있는 것을 확인할 수 있다.
+
+![env_list](/assets/images/kubernetes/env_list.jpg)
+
+## Pod Design Pattern
+
+![pod_design_pattern](/assets/images/kubernetes/pod_design_pattern.jpg)
+
+> sidecar
+
+웹서버에서 만들어낸 로그 정보를 sidecar container로 넘겨줘서, 해당 sidecar container는 로그 정보를 분석하게 된다. 즉, 하나의 container는 다른 container가 만들어낸 정보를 이용하게 된다. 이렇게 되면 두 개의 container는 유기적으로 동작하기 때문에, 하나의 container는 단독으로 동작할 수 없다.
+
+> adapter
+
+외부의 리소스 정보를 받아서, 웹서버 container로 전달한다. 외부의 정보를 받아서 다른 컨테이너에 넘겨주는 adaptor 역할을 수행한다. 가령, 정보의 소스마다 포맷이 다른데, 이러한 포맷을 일관성 있게 변환해주게 되면, webserver에서는 해당 포맷 대로 데이터를 처리할 수 있게 된다.
+
+> ambassador
+
+웹서버에서 생성된 데이터(고객 데이터??)를 넘겨서 캐시 형태로 저장시키는 형태이다. 즉 하나의 컨테이너에서 발생한 정보를 받아서 외부에 분배해서 저장하는 패턴이다. ambassador container을 통해 외부로 데이터를 전달하게 되는 것이다. ambassador container는 main container에 대한 네트워크 연결을 전담하는 프록시 역할을 수행하게 된다.
+
+[link](https://seongjin.me/kubernetes-multi-container-pod-design-patterns/)
 
 ## References
 
