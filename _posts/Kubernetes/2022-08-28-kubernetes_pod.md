@@ -593,9 +593,11 @@ master node의 static directory를 보면 위와 같이 yaml 파일들을 확인
 ## Pod Resource 할당
 
 1. limit (최대 리소스양)
+
 pod도 cpu,memory와 같은 system resource를 할당받아서 사용한다. 만약, resource limit을 제한하지 않게 되면, 특정 pod는 system resource를 모두 다 사용하는 경우가 발생할 수 있다. limit는 이러한 시스템 자원에 대해 최대 사용량을 지정하는 것이다.
 
 2. request (최소 리소스양)
+
 이는, pod를 실행할 worker node를 할당하게 될때, system resource에 대한 최소 여유량을 정의하는 것이다. 이는, system resource가 부족한 worker node에 pod를 배치 하는 것을 방지하는 역할을 한다. 최소 자원 요구량을 request 함으로써, scheduler는 worker node 중에 해당 요구량 이상의 자원을 가지고 있는 worker node를 찾아서 pod를 해당 노드에 할당하게 된다.
 
 ### Kubernetes resource 단위 표현법
