@@ -584,7 +584,7 @@ deployment.apps/deploy-nginx created
 
 위와 같이 version 정보를 수정하게 되면 아래와 같이 rolling update가 진행 되는것 을 확인할 수 있다.
 
-![deployment_rolling_update_annotation2](/assets/images/kubernetes/deployment_rolling_update_annotation)
+![deployment_rolling_update_annotation2](/assets/images/kubernetes/deployment_rolling_update_annotation2.jpg)
 
 3. rollout history 정보
 
@@ -596,7 +596,332 @@ REVISION  CHANGE-CAUSE
 2         version 1.15
 ```
 
+## DaemonSet
 
+노드 당 1개씩의 pod를 보장해준다.
+
+![daemon_set_mechanism](/assets/images/kubernetes/daemon_set_mechanism.png)
+
+보통 로그 수집기와 같이 모든 노드에서 필요한 서비스의 경우 DaemonSet을 통해 모든 node에서 실행될 수 있도록 보장한다.
+
+> daemonset-nginx.yaml
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: daemonset-nginx
+spec:
+  selector:
+    matchLabels:
+      app: webui
+  template:
+    metadata:
+      name: nginx-pod
+      labels:
+        app: webui
+    spec:
+      containers: 
+        - name: nginx-container
+          image: nginx:1.14
+```
+
+### Practice
+
+위의 daemonset을 생성해서 실행해보면 worker node가 한 개만 동작하는 상황에서 아래와 같이 1개의 pod가 생성됨을 확인할 수 있다.
+
+```shell
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl get nodes
+NAME                      STATUS   ROLES           AGE     VERSION
+toojeymaster-virtualbox   Ready    control-plane   7d13h   v1.25.0
+toojeynode1-virtualbox    Ready    <none>          7d13h   v1.25.0
+```
+
+![daemon_set_result](/assets/images/kubernetes/daemon_set_result.png)
+
+
+여기서, worker node를 1개 추가시키면 어떻게 되는 지 확인해 보자.
+worker node를 추가하는 방법은 kubeadm의 join option을 활용하면 되는데, 이는 여기를 참조하자 [kubeadm_join]({% post_url 2022-08-24-installdocker_kunernetes %})
+
+> 여기서 worker node를 추가한 이후에 어떻게 변하는 지 확인해보자
+
+```shell
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl get nodes
+NAME                      STATUS   ROLES           AGE     VERSION
+toojeymaster-virtualbox   Ready    control-plane   7d13h   v1.25.0
+toojeynode1-virtualbox    Ready    <none>          7d13h   v1.25.0
+toojeynode2-virtualbox    Ready    <none>          2m42s   v1.25.0
+```
+
+![daemon_set_result2](/assets/images/kubernetes/daemon_set_result2.png)
+
+worker node가 추가됨에 따라 pod가 1개 추가로 생성되는 것을 확인할 수 있다.
+
+### Rolling Update
+
+Daemonset을 이용하게 되면, Rolling Update를 수행할 수 있다.
+
+![daemon_set_rolling_update1](/assets/images/kubernetes/daemon_set_rolling_update1.jpg)
+
+위와 같이 kubectl edit 명령어를 통해 version 정보를 1.14에서 1.15로 수정하게 되면 아래의 결과를 확인할 수 있다.
+
+![daemon_set_rolling_update2](/assets/images/kubernetes/daemon_set_rolling_update2.jpg)
+
+Deployment와 달리 기존의 pod를 제거하고 새로운 버전의 pod가 생성되는 방식이다.
+
+### RollBack
+
+rolling update와 마찬가지로, roll back도 가능하다.
+
+```shell
+toojey-master@toojeymaster-VirtualBox:~$ kubectl rollout undo daemonset daemonset-nginx 
+daemonset.apps/daemonset-nginx rolled back
+```
+
+![daemon_set_rollback](/assets/images/kubernetes/daemon_set_rollback.jpg)
+
+## Stateful Set
+
+Pod의 상태를 유지해주는 controller이다.
+
+기존의 replicationcontroller, set, 와 같은 controller는 pod를 생성할 때, pod의 이름을 임의로 생성하였다.
+
+가령 daemont set이 실행하는 pod의 이름은 아래와 같다. daemonset-nginx까지는 동일하게 유지하고, 이후에는 hash값을 붙여서 pod 이름을 달리하게 된다. hash 값은 랜덤하게 적용하기 때문에 pod name에 대해 보장이 되지 않는다.
+
+
+```
+toojey-master@toojeymaster-VirtualBox:~$ kubectl get pods
+NAME                    READY   STATUS    RESTARTS   AGE
+daemonset-nginx-94gvr   1/1     Running   0          7m3s
+daemonset-nginx-tbp4z   1/1     Running   0          7m1s
+```
+
+하지만, stateful set을 활용하면 pod의 이름을 유지할 수 있게된다. 
+
+![stateful_set_mechanism](/assets/images/kubernetes/stateful_set_mechanism.png)
+
+위와 같이, pod에 대한 index을 유지하므로써, pod의 이름을 보장해주게 된다.
+
+
+### Practice
+
+> sf-nginx.yaml
+
+```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sf-nginx
+spec:
+  replicas: 3
+  serviceName: sf-service
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: webui
+  template:
+    metadata:
+      name: nginx-pod
+      labels:
+        app: webui
+    spec:
+      containers: 
+        - name: nginx-container
+          image: nginx:1.14
+```
+
+아래의 생성 결과를 확인해보면 pod 이름이 0,1,2로 보장되는 것을 확인할 수 있다.
+![stateful_set_parallel](/assets/images/kubernetes/stateful_set_parallel.png)
+
+podManagementPolicy를 OrderedReady로 설정하게 되면 0,1,2가 순서대로 만들어지게 된다.
+
+![stateful_set_ordered](/assets/images/kubernetes/stateful_set_ordered.png)
+
+
+만약 1번 pod를 제거하면 어떻게 될까? --> 아래와 같이 pod1 이 지워지고 새로운 pod1이 생성되게 된다. 이처럼 pod name에 대한 보장을 해주는 것이 StatefulSet이다.
+
+![stateful_set_guarantee_pod_name](/assets/images/kubernetes/stateful_set_guarantee_pod_name.png)
+
+**scale 혹은 rolling update를 적용하는 것도 가능하다.**
+
+
+## Job Controller
+
+kubernetes의 경우 pod에 대해서 running 상태를 유지하려고 한다.
+
+아래의 commang을 실행하는 centos container을 만들어주게 되면, 5초 동안에는 container가 동작하지만 그 이후에는 종료된다. 하지만, kubernetes는 running pod를 유지하려는 경향이 있어, 아무것도 하지 않는 container에 대해 다시 재시작해주는 작업을 계속해서 진행한다. 즉 5초마다 container가 재기동하게 된다.
+
+```shell
+kubectl run testpod --image=centos:7 --command sleep 5
+```
+
+![running_container](/assets/images/kubernetes/running_container.png)
+
+하지만, 매번 pod가 동작하는 경우만 있는 것은 아니다. 경우에 따라서는 정상적으로 종료하는 pod도 존재한다. 이를 위해 Job Controller라는 것이 존재한다.
+
+Job Controller을 통해 Pod가 정상적으로 작업을 처리한 경우 작업을 완료하게 되고, 비정상적으로 종료된 경우는 pod를 재시작하게 된다.
+
+![job_controller](/assets/images/kubernetes/job_controller.png)
+
+### Practice
+
+> job-exam.yaml
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: centos-job
+spec:
+#  completions: 5
+#  parallelism: 2
+#  activeDeadlineSeconds: 15
+  template:
+    spec:
+      containers:
+      - name: centos-container
+        image: centos:7
+        command: ["bash"]
+        args:
+        - "-c"
+        - "echo 'Hello World'; sleep 50; echo 'Bye'"
+      restartPolicy: Never
+```
+
+위와 같이 JobController을 통해 pod를 생성하게 되면, batch 처리가 정상적으로 완료되고 나면 해당 pod는 정상적으로 종료된다.
+
+하지만 아래와 같이 중간에 비정상적으로 종료하게 되면 어떻게 될까?
+
+```shell
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl create -f job-exam.yaml 
+job.batch/centos-job created
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl delete pod centos-job-dphg5 
+```
+
+결과를 살펴보면, 작업(sleep 50) 진행 중이던 pod를 중간에 강제로 제거하였으므로 이는 비정상적인 종료에 해당한다. 잘 보면 pod가 제거되고 나서, 새로운 pod를 실행하는 것을 확인할 수 있다.
+
+![job_controller_mechanism](/assets/images/kubernetes/job_controller_mechanism.jpg)
+
+#### restartPolicy
+
+never으로 설정되어 있으면 pod을 재시작하게 되고, OnFailure으로 명시되어 있으면 container만 재시작된다.
+
+restartPolicy를 OnFailure로 사용하게 되면, backOffLimit도 같이 지정해주게 되는데, 이는 container 최대 재시작 횟수를 의미한다. 설정한 최대값 이상으로 재시작되게 되면 pod가 제거된다.
+
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: centos-job
+spec:
+#  completions: 5
+#  parallelism: 2
+#  activeDeadlineSeconds: 15
+  template:
+    spec:
+      containers:
+      - name: centos-container
+        image: centos:7
+        command: ["bashc"]
+        args:
+        - "-c"
+        - "echo 'Hello World'; sleep 50; echo 'Bye'"
+      restartPolicy: OnFailure
+  backoffLimit: 3
+```
+
+backoffLimit으로 설정한 3을 통해 총 3번의 재시작 이후에 pod가 재시작되는 것을 확인할 수 있다.
+
+![job_controller_retry](/assets/images/kubernetes/job_controller_retry.jpg)
+
+
+restartPolicy를 Never(기본값)으로 설정하게 되면 container가 restart되는 것이 아니라, pod 자체가 재시작된다.
+
+![job_controller_retry_pod](/assets/images/kubernetes/job_controller_retry_pod.jpg)
+
+#### Completions
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: centos-job
+spec:
+  completions: 5
+#  parallelism: 2
+#  activeDeadlineSeconds: 15
+  template:
+    spec:
+      containers:
+      - name: centos-container
+        image: centos:7
+        command: ["bashc"]
+        args:
+        - "-c"
+        - "echo 'Hello World'; sleep 50; echo 'Bye'"
+      restartPolicy: OnFailure
+  backoffLimit: 3
+```
+job controller의 replicas를 수행하는 것이 Completions이다. completions을 통해 작업을 수행할 횟수를 지정할 수 있다. 
+
+![job_controller_completions](/assets/images/kubernetes/job_controller_completions.png)
+
+위의 경우를 보면 completed 과정이 총 3번 연달아서 수행되게 된다. 
+
+여기에 추가로 parallelism property도 추가하게 되면 한번에 수행 되는 batch 작업의 횟수를 지정할 수 있다. 즉 아래와 같이 하게 되면 동시에 2개씩 작업이 처리 되며, 총 5번의 작업이 수행된다.
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: centos-job
+spec:
+  completions: 5
+  parallelism: 2
+#  activeDeadlineSeconds: 15
+  template:
+    spec:
+      containers:
+      - name: centos-container
+        image: centos:7
+        command: ["bashc"]
+        args:
+        - "-c"
+        - "echo 'Hello World'; sleep 50; echo 'Bye'"
+      restartPolicy: OnFailure
+  backoffLimit: 3
+```
+
+![job_controller_completions_parallelism](/assets/images/kubernetes/job_controller_completions_parallelism.png)
+
+#### ActiveDeadlineSeconds
+
+해당 property를 설정하게 되면 최대 어플리케이션 동작 시간을 설정할 수 있다. 즉, 아래와 같이 5로 지정한 경우 애플리케이션이 종료되지 않더라도 5초가 지나게 되면 강제로 작업을 종료하게 된다.
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: centos-job
+spec:
+        #  completions: 5
+        #  parallelism: 2
+  activeDeadlineSeconds: 5
+  template:
+    spec:
+      containers:
+      - name: centos-container
+        image: centos:7
+        command: ["bash"]
+        args:
+        - "-c"
+        - "echo 'Hello World'; sleep 5; echo 'Bye'"
+      restartPolicy: Never
+      # backoffLimit: 3
+```
+
+![job_controller_activedeadlineseconds](/assets/images/kubernetes/job_controller_activedeadlineseconds.png)
 
 ## References
 
