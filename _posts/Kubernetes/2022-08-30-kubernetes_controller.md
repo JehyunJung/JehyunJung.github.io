@@ -730,7 +730,8 @@ spec:
           image: nginx:1.14
 ```
 
-아래의 생성 결과를 확인해보면 pod 이름이 0,1,2로 보장되는 것을 확인할 수 있다.
+아래의 생성 결과를 확인해보면 pod 이름이 0,1,2로 보장되는 것을 확인할 수 있다. 여기서는 podManagementPolicy를 parallel하게 설정했는데, 이렇게 하면 pod를 동시에 생성된다.
+
 ![stateful_set_parallel](/assets/images/kubernetes/stateful_set_parallel.png)
 
 podManagementPolicy를 OrderedReady로 설정하게 되면 0,1,2가 순서대로 만들어지게 된다.
@@ -749,7 +750,7 @@ podManagementPolicy를 OrderedReady로 설정하게 되면 0,1,2가 순서대로
 
 kubernetes의 경우 pod에 대해서 running 상태를 유지하려고 한다.
 
-아래의 commang을 실행하는 centos container을 만들어주게 되면, 5초 동안에는 container가 동작하지만 그 이후에는 종료된다. 하지만, kubernetes는 running pod를 유지하려는 경향이 있어, 아무것도 하지 않는 container에 대해 다시 재시작해주는 작업을 계속해서 진행한다. 즉 5초마다 container가 재기동하게 된다.
+아래의 command을 실행하는 centos container을 만들어주게 되면, 5초 동안에는 container가 동작하지만 그 이후에는 종료된다. 하지만, kubernetes는 running pod를 유지하려는 경향이 있어, 아무것도 하지 않는 container에 대해 다시 재시작해주는 작업을 계속해서 진행한다. 즉, 작업이 완료된 container에 대해서 종료된 상태로 놔두지 않고, 애플리케이션이 끊나는 5초마다 container가 재기동하게 된다.
 
 ```shell
 kubectl run testpod --image=centos:7 --command sleep 5
@@ -838,7 +839,7 @@ backoffLimit으로 설정한 3을 통해 총 3번의 재시작 이후에 pod가 
 
 restartPolicy를 Never(기본값)으로 설정하게 되면 container가 restart되는 것이 아니라, pod 자체가 재시작된다.
 
-![job_controller_retry_pod](/assets/images/kubernetes/job_controller_retry_pod.jpg)
+![job_controller_retry_pod](/assets/images/kubernetes/job_controller_retry_pod.png)
 
 #### Completions
 
@@ -893,7 +894,7 @@ spec:
   backoffLimit: 3
 ```
 
-![job_controller_completions_parallelism](/assets/images/kubernetes/job_controller_completions_parallelism.png)
+![job_controller_completions_parallelism](/assets/images/kubernetes/job_controller_completions_parallelism.png.jpg)
 
 #### ActiveDeadlineSeconds
 
@@ -916,12 +917,99 @@ spec:
         command: ["bash"]
         args:
         - "-c"
-        - "echo 'Hello World'; sleep 5; echo 'Bye'"
+        - "echo 'Hello World'; sleep 25; echo 'Bye'"
       restartPolicy: Never
       # backoffLimit: 3
 ```
 
 ![job_controller_activedeadlineseconds](/assets/images/kubernetes/job_controller_activedeadlineseconds.png)
+
+## CronJob
+
+CronJob는 Job를 제어해서, job에 대한 제어를 할 수 있다. 리눅스에서 주기적으로 실행해야하는 명령에 대해서 처리하는 cron과 같은 역할을 수행한다고 보면 된다.
+
+주기는 아래와 같이 나타낼 수 있다.
+
+CronJob "0 3 1 * *"
+
+|properties|description|
+|--|--|
+|Minutes|0~59|
+|Hours|0~23|
+|Day|1~31|
+|Month|1~12|
+|Day of Week|0~6|
+
+> CronJob Schedule 예시
+
+1. 0 9 1 * * -> 매월 1일 아침 9시에 job을 실행하도록 한다.
+
+2. 매주 일요일 새벽 3시에 job를 실행해줘 -> 0 3 * * 0
+
+3. 주중 새벽 3시에 job 실행 -> 0 3 * * 1-5
+
+4. job을 5분마다 반복 실행 -> */5 * * * *
+
+5. 2시간마다 정각에 실행 -> 0 */2 * * *
+
+
+아래와 같이 job controller로 동작되는 작업에 대해서, cronjob을 활용하면 job에 대한 주기를 설정해서 반복적으로 job를 실행할 수 있도록 한다.
+
+![cron_job_mechanism](/assets/images/kubernetes/cron_job_mechanism.png)
+
+### Practice
+
+> CronJob 
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cronjob-exam
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+  spec:
+    template:
+      spec:
+        containers:
+        - name: centos-container
+          image: centos:7
+          command: ["bashc"]
+          args:
+          - "-c"
+          - "echo 'Hello World'; sleep 50; echo 'Bye'"
+        restartPolicy: Never
+```
+
+보면, cronjob 의 jobTemplate에 들어가는 부분이 job의 spec과 똑같은 것을 확인할 수 있다. 이를 통해 cronjob이 job을 통해서 pod를 관리하는 것을 알 수 있다.
+
+위의 schedule을 토대로 job을 실행하게 되면 매분 job이 반복해서 실행된다. 아래의 결과를 확인해보면 매분 00초에 job을 실행하는 것을 확인할 수 있다.
+
+![cron_job_practice1](/assets/images/kubernetes/cron_job_practice1.png)
+
+
+```yaml
+spec:
+  schedule: "* * * * *"
+  startingDeadlineSeconds: 500
+  concurrencyPolicy: Forbid
+  successfulJobHistoryLimit: 3
+```
+
+추가로, CronJob에 추가할 수 있는 속성이 있는데, 아래와 같다.
+
+|Property|Description|
+|--|--|
+|startingDeadlineSeconds|설정한 초 이내에 job이 실행되지 않으면 job을 취소시킨다. |
+|concurrencyPolicy|동시에 작동될 수 있는 job의 개수 지정, 작업에 따라 소요되는 시간은 다양하다. 하지만 schedule 정책의 주기를 넘어서는 job도 존재할 수 있는데, 이때 Forbid로 설정하게 되면, 이전의 job이 처리되어야 새로운 job을 실행할 수 있게 하고, Allow으로 설정하면 동시에 여러개의 job이 실행하는 것을 허용한다.|
+|successfulJobHistoryLimit|job 기록을 몇개까지 남길 것인지에 대한 설정으로, 해당 값만 큼 job 기록이 남게 되고, 넘어서는 작업에 대해서는 가장 오래전에 실행된 기록을 제거한다.|
+
+아래의 결과를 보면 successfulJobHistoryLimit가 3으로 설정되어 있기 때문에 job이 추가로 실행되면서 가장 오래된 history가 1개 삭제된다.
+
+![cron_job_practice2](/assets/images/kubernetes/cron_job_practice2.jpg)
+
+
 
 ## References
 
