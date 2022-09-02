@@ -89,6 +89,7 @@ kind: Service
 metadata:
   name: clusterip-service
 spec:
+  type: ClusterIP
   clusterIP: 10.100.100.100
   selector:
     app: webui
@@ -216,7 +217,7 @@ spec:
 
 cluster안에서 외부에 접속 시 사용할 도메인을 등록해서 사용할 수 있다. 그렇게 되면 클래스 도메인이 실제 외부 도메인으로 치환되어 동작하게 된다.
 
-클러스터 내에서 DNS 서비스를 제공한다고 생각하면 된다. 아래의 동작과정을 통해 자세히 알아보자
+클러스터 내에서 pod에 대한 DNS 서비스를 제공한다고 생각하면 된다. 아래의 동작과정을 통해 자세히 알아보자
 
 #### Practice
 
@@ -238,6 +239,65 @@ spec:
 |default.svc.cluster.local|kubernetes의 default domain|
 
 ![externalname-service](/assets/images/kubernetes/externalname-service.jpg)
+
+## Headless Service
+
+![headless_service](/assets/images/kubernetes/headless_service_mechansim.png)
+
+cluster ip가 없는 서비스를 의미한다. 다만, pod들에 대한 endpoint로 DNS record가 생성되어, control plane의 coreDNS에 저장된다. 이에 따라, Pod의 Endpoint에 대한 DNS resolving Service를 지원한다.
+
+### Practice
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: headless-service
+spec:
+  type: ClusterIp
+  clusterIP: None
+  selector:
+    app: webui
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+```
+
+위와 같이 clusterIp를 None으로 설정하게 되면 headless-service로 생성되게 된다. 아래의 결과를 확인해보면 endpoint는 묶여있지만, clusterIp는 설정되지 않은 것을 확인할 수 있다.
+
+![headless-service_description](/assets/images/kubernetes/headless_service_description.png)
+
+하지만 headless service의 핵심 기능은 coreDNS을 통한 DNS resolving service를 제공한다는 점이다.
+
+```shell
+^Ctoojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl run testpod --image=centos:7 -it /bin/bash
+If you dont see a command prompt, try pressing enter.
+[root@testpod /]cat /etc/resolv.conf
+search default.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+[root@testpod /]curl 10-36-0-2.default.pod.cluster.local
+Website #1
+```
+
+pod를 하나 생성해서, resolv.conf을 통해 DNS 서버를 확인해보면 실제 control plane의 coreDNS IP에 대해 알아낼 수 있다.
+
+이에 대해, pod-ip.default.pod.cluster.local을 요청을 보내게 되면 실제 해당 pod에 접속을 진행하게 된다. 위의 경우는 node1에 접속한 결과이다.
+
+## Kube Proxy
+
+Kubernetes Service의 Backend을 구현하는 역할을 수행한다. 
+
+아래의 get pods 결과를 보면 총 3개의 kube-proxy가 동작하는데,모든 노드(master,worker1,worker2)에 대해서 동작하게 되며, cluster IP, nodeport와 같은 service를 요청하게 되면 kube-proxy가 동작하여 각각의 노드에 대한 IP table rules을 생성하게 된다. 
+
+![kubeproxy](/assets/images/kubernetes/kubeproxy.png)
+
+아래의 그림을 확인해보면 pod에 대해 ip table이 생성되는 것을 확인할 수 있다.
+
+![kubeproxy_iptables](/assets/images/kubernetes/kubeproxy_iptables.jpg)
+
+
 
 
 ## References
