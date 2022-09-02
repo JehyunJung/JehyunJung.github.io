@@ -9,7 +9,6 @@ tags:
   - codetest
   - boj
   - samsung
-  - bfs
 ---
 # [BOJ] Q20061 모노미노도미노 2
 ## [Question](https://www.acmicpc.net/problem/20061)
