@@ -50,6 +50,7 @@ kind: Service
 metadata:
   name: webui-svc
 spec:
+  type: ClusterIP
   clusterIP: 10.96.100.100
   selector:
     app: webui
