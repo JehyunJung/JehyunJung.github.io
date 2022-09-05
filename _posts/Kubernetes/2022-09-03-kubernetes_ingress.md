@@ -220,6 +220,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: marvel-ingress
+  annotations:
+    kubernetex.io/ingress.class : "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+
 spec: 
   rules:
   - http:
@@ -262,6 +266,52 @@ Events:       <none>
 ```
 
 ### WebService 접속
+
+아래와 같이 NodePort을 통한 접속 요청이 원할하게 됨을 확인할 수 있다.
+
+> node1에 대해 접속
+
+```shell
+toojey-master@toojeymaster-VirtualBox:~/kubernetes/webdemo$ curl 10.100.0.102:30100
+<html>
+<head>
+  <title>marvel heroes</title>
+</head>
+<body>
+  <center>
+  <img src="images/marvel_logo.png"><br>
+  <p style="color:red;">Marvel Entertainment/Marvel Studios</p><br>
+  <img src="images/category.png"><br>
+  <a href="http://211.253.8.13/pay">[payment]</a></center>
+
+  </center>
+</body>
+</html>
+toojey-master@toojeymaster-VirtualBox:~/kubernetes/webdemo$ curl 10.100.0.102:30100/pay
+PAYMENT Page
+```
+
+> node 2에 대한 접속
+
+```shell
+toojey-master@toojeymaster-VirtualBox:~/kubernetes/webdemo$ curl 10.100.0.104:30100
+<html>
+<head>
+  <title>marvel heroes</title>
+</head>
+<body>
+  <center>
+  <img src="images/marvel_logo.png"><br>
+  <p style="color:red;">Marvel Entertainment/Marvel Studios</p><br>
+  <img src="images/category.png"><br>
+  <a href="http://211.253.8.13/pay">[payment]</a></center>
+
+  </center>
+</body>
+</html>
+toojey-master@toojeymaster-VirtualBox:~/kubernetes/webdemo$ curl 10.100.0.104:30100/pay
+PAYMENT Page
+```
 
 
 
