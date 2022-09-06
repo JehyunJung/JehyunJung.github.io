@@ -252,8 +252,108 @@ spec:
 ```
 annotation은 metadata에 추가시켜서 활용한다. 그러면, describe을 통해 확인 해보면 아래와 같이 annotation 정보가 추가되어 있는 것을 확인할 수 있다.
 
-![pod_annotation](/assets/images/kubernetes/pod_annotation.jpg
+![pod_annotation](/assets/images/kubernetes/pod_annotation.jpg)
 
+## Carnary Deployment
+
+애플리케이션 배포 방법
+1. 블루그린 업데이트
+블루(old) 서비스를 모두 다 내린 다음 그린(new) 서비스를 올리는 방식, 서비스 다운 시간이 존재하는 방식 
+
+2. 카나리 업데이트
+기존의 버전을 유지한 채, 일부 기능만 신규 버전을 동작시켜서 문제가 없는 지 확인하면서 기능을 추가하는 방식, 기능을 부분적으로 신규 버전으로 만드는 방식
+
+3. 롤링 업데이트
+deployment에서 수행한 방식으로, 서비스를 유지한 채, 새로운 서비스를 한개씩 올리면서 기존의 서비스를 내리는 방식으로 무중단 서비스를 제공한다.
+
+![carnary_update](/assets/images/kubernetes/carnary_update.png)
+
+위와 같이, 기존의 서비스는 유지 한채, 카나리 서비스(부분 기능)을 올려서 테스트 하면서, 문제가 없으면 추가하는 방식이다.
+
+이때, 기존의 버전과 신규 버전은 하나의 서비스로 묶이기 때문에 사용자는 어떠한 버전이 제공되는지는 알지 못한 채로 사용하게 된다.
+
+### Pratice
+
+위의 도식도를 토대로 carnary update를 구성해보자
+
+> mainui-stable
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mainui-stable
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mainui
+      version: stable
+  template:
+    metadata:
+      labels:
+        app: mainui
+        version: stable
+    spec:
+      containers:
+      - image: nginx:1.14
+        name: nginx
+      - ports: 
+          - containerPort: 80
+```
+
+> mainui-service
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mainui-service
+spec:
+  type: ClusterIP
+  selector:
+    app: mainui
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+```
+
+해당 서비스에 대한 단일 진입점(service) 구성
+
+> mainui-carnary
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mainui-carnary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mainui
+      version: carnary
+  template:
+    metadata:
+      labels:
+        app: mainui
+        version: carnary
+    spec:
+      containers:
+      - image: nginx:1.15
+        name: nginx
+        ports: 
+          - containerPort: 80
+```
+
+위의 carnary pod까지 실행해보면 총 3개의 pod가 service에 의해서 묶인 것을 확인할 수 있다.
+
+![carnary_update2](/assets/images/kubernetes/carnary_update2.png)
+
+이런식으로 구성한 후, 사용자를 대상으로 한 베타 테스트를 진행한 후, scale 명령어를 통해 carnary 개수를 늘리거나, 기존의 서비스를 줄이는 방식을 취할 수 있다.
+
+즉, label을 적절히 사용하면서, 위와 같이 버전 관리를 할 수 있게 된다.
 
 
 ## References
