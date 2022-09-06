@@ -21,7 +21,7 @@ tags:
 평행 이동의 경우 상하좌우의 방향으로 한칸씩 수행가능하며
 회전의 경우, 회전축에 따라 시계방향과 시계반대방향으로 회전을 수행할 수 있다.
 
-![p60063](/assets/images/algorithm/p60063.png)
+![p60063](../../../../../../assets/images/algorithm/p60063.png)
 
 위의 그림을 통해 회전 할 수 있는 경우가 state/axis/direction 별로 8가지의 경우가 있음을 확인할 수 있다.
 

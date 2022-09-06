@@ -15,7 +15,7 @@ tags:
 ## Language: Python
 
 
-![p72414.png](/assets/images/algorithm/p72414.png)
+![p72414.png](../../../../../../assets/images/algorithm/p72414.png)
 
 해당 문제는 주어진 카드 쌍이 나열된 지도에서 같은 카드를 2개를 뽑으면 카드를 지우는 흔한 카드 짝 찾기 게임이다.
 
