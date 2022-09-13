@@ -3,7 +3,7 @@ title: "kubeadm token 생성"
 excerpt: ""
 
 categories:
-  - cloud
+  - Trouble_Shooting
 tags:
   - ssh
   - ubuntu

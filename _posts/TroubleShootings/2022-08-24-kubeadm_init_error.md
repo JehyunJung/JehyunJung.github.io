@@ -3,7 +3,7 @@ title: "kubeadm init 에러"
 excerpt: ""
 
 categories:
-  - cloud
+  - Trouble_Shooting
 tags:
   - ssh
   - ubuntu
