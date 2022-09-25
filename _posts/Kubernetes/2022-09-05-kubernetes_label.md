@@ -349,7 +349,7 @@ spec:
 
 위의 carnary pod까지 실행해보면 총 3개의 pod가 service에 의해서 묶인 것을 확인할 수 있다.
 
-![carnary_update2](/assets/images/kubernetes/carnary_update2.png)
+![carnary_update2](/assets/images/kubernetes/carnary_update2.jpg)
 
 이런식으로 구성한 후, 사용자를 대상으로 한 베타 테스트를 진행한 후, scale 명령어를 통해 carnary 개수를 늘리거나, 기존의 서비스를 줄이는 방식을 취할 수 있다.
 

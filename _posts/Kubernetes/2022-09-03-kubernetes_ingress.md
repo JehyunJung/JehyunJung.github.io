@@ -30,7 +30,9 @@ cluster 내부의 서비스를 외부에서 사용할 수 있도록 제공하는
 가령 Main, Login, Order Service가 있다고 했을 때,
 
 http://www.example.com/ -> svc Main
+
 http://www.example.com/login -> svc Login
+
 http://www.example.com/order -> svc Order
 
 같이 ingress rule을 설정하게 되면 사용자는 외부에서 내부 서비스를 요청하는 것이 가능하다.
