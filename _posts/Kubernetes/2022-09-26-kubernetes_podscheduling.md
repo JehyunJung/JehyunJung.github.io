@@ -208,6 +208,201 @@ frontend-56b5c75f78-k2kqc   0/1     Completed   0          13s     10.44.0.1   t
 frontend-56b5c75f78-x5d6q   0/1     Completed   0          13s     10.44.0.5   toojeynode2-virtualbox   <none>           <none>
 ```
 
+## Taint & Toleration
+
+node에 taint을 설정하면, toleration을 가진 pod는 동일한 taint을 가지는 모든 node에 pod가 배치된다.
+
+master node를 보면 아래와 같이 taint가 설정되어 있는데, NoSchedule option을 통해 taint을 설정한 경우, toleration이 맞지 않는 경우 해당 노드에는 pod가 배치되지 않는다. 따라서, 항상 pod를 실행하게 되면 master node을 제외하고 실행되게 된다.
+
+```sh
+toojey-master@toojeymaster-VirtualBox:~$ kubectl describe node toojeymaster-virtualbox | grep -i taint
+Taints:             node-role.kubernetes.io/control-plane:NoSchedule
+```
+
+|Effects|Description|
+|--|--|
+|NoSchedule|toleration이 맞지 않으면 배치하지 않는다|
+|preferNoSchedule|toleration이 맞지 않으면 배치되지 않으나, 리소스가 부족한 경우 할당된다.|
+|NoExecute|toleration이 맞으면 동작중인 pod 종료|
+
+
+> Taint 설정
+
+```sh
+toojey-master@toojeymaster-VirtualBox:~$ kubectl taint nodes toojeynode1-virtualbox role=web:NoSchedule
+```
+
+```sh
+toojey-master@toojeymaster-VirtualBox:~$ kubectl taint nodes toojeynode1-virtualbox role-
+```
+생성/삭제 작업은 label을 붙이는 작업과 유사하다.
+
+### Practice
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-nginx
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: webui
+  template:
+    metadata:
+      name: nginx-pod
+      labels:
+        app: webui
+    spec:
+      containers: 
+        - name: nginx-container
+          image: nginx:1.14
+```
+위와 같이 toleration이 없는 pod에 대해서는, NoSchedul taint을 가지는 node에 실행되지 않는다.
+아래를 보면, Taint가 없는 node2에서만 실행되는 것을 확인할 수 있다.
+
+```sh
+deploy-nginx-5cfbcf5f65-d8z92   1/1     Running   0             3s    10.44.0.3   toojeynode2-virtualbox   <none>           <none>
+deploy-nginx-5cfbcf5f65-hq7mt   1/1     Running   0             3s    10.44.0.4   toojeynode2-virtualbox   <none>           <none>
+deploy-nginx-5cfbcf5f65-rtzd8   1/1     Running   0             3s    10.44.0.1   toojeynode2-virtualbox   <none>           <none>
+deploy-nginx-5cfbcf5f65-sxcmm   1/1     Running   0             2s    10.44.0.2   toojeynode2-virtualbox   <none>           <none>
+```
+
+아래와 같이 Pod에 toleration을 추가하게 되면 같은 taint을 가지는 node에서도 실행되는 것을 확인할 수 있다.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deploy-nginx
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: webui
+  template:
+    metadata:
+      name: nginx-pod
+      labels:
+        app: webui
+    spec:
+      containers: 
+        - name: nginx-container
+          image: nginx:1.14
+      toleration:
+        - key: "role"
+          operator: "Equal"
+          value: "web"
+          Effect: "NoSchedule"
+```
+
+```sh
+deploy-nginx-78b99b44b-2zggg   1/1     Running   0          7s    10.36.0.2   toojeynode1-virtualbox   <none>           <none>
+deploy-nginx-78b99b44b-5pmzc   1/1     Running   0          7s    10.44.0.2   toojeynode2-virtualbox   <none>           <none>
+deploy-nginx-78b99b44b-dt6qx   1/1     Running   0          7s    10.36.0.1   toojeynode1-virtualbox   <none>           <none>
+deploy-nginx-78b99b44b-zh986   1/1     Running   0          7s    10.44.0.1   toojeynode2-virtualbox   <none>           <none>
+```
+
+## Cordon
+
+cordon을 설정하게 되면 해당 노드에는 pod가 배치되지 않도록 할 수 있다.
+
+![cordon_nodes](/assets/images/kubernetes/cordon_nodes.png)
+
+> Cordon 설정
+
+```sh
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl get nodes
+NAME                      STATUS   ROLES           AGE   VERSION
+toojeymaster-virtualbox   Ready    control-plane   21d   v1.25.0
+toojeynode1-virtualbox    Ready    <none>          21d   v1.25.0
+toojeynode2-virtualbox    Ready    <none>          21d   v1.25.0
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl cordon toojeynode1-virtualbox 
+node/toojeynode1-virtualbox cordoned
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl get nodes
+NAME                      STATUS                     ROLES           AGE   VERSION
+toojeymaster-virtualbox   Ready                      control-plane   21d   v1.25.0
+toojeynode1-virtualbox    Ready,SchedulingDisabled   <none>          21d   v1.25.0
+toojeynode2-virtualbox    Ready                      <none>          21d   v1.25.0
+```
+
+> Uncordon
+
+```sh
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl uncordon toojeynode1-virtualbox 
+node/toojeynode1-virtualbox uncordoned
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl get nodes
+NAME                      STATUS   ROLES           AGE   VERSION
+toojeymaster-virtualbox   Ready    control-plane   21d   v1.25.0
+toojeynode1-virtualbox    Ready    <none>          21d   v1.25.0
+toojeynode2-virtualbox    Ready    <none>          21d   v1.25.0
+```
+
+### Practice
+
+deployment을 실행하게 되면 아래의 결과를 확인해보면, cordon이 설정된 node1에는 pod가 실행되지 않음을 확인할 수 있다.
+
+```sh
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl get pods -o wide
+NAME                            READY   STATUS    RESTARTS   AGE   IP          NODE                     NOMINATED NODE   READINESS GATES
+deploy-nginx-5cfbcf5f65-tvzsc   1/1     Running   0          6s    10.44.0.2   toojeynode2-virtualbox   <none>           <none>
+deploy-nginx-5cfbcf5f65-w2nwc   1/1     Running   0          6s    10.44.0.3   toojeynode2-virtualbox   <none>           <none>
+deploy-nginx-5cfbcf5f65-xn8pv   1/1     Running   0          6s    10.44.0.1   toojeynode2-virtualbox   <none>           <none>
+```
+
+## Drain
+
+특정 노드의 모든 pod를 제거하도록 한다.
+
+> Drain 설정
+
+```sh
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl drain toojeynode2-virtualbox --ignore-daemonsets --force
+node/toojeynode2-virtualbox cordoned
+Warning: deleting Pods that declare no controller: default/db; ignoring DaemonSet-managed Pods: kube-system/kube-proxy-fhfw2, kube-system/weave-net-k726r
+evicting pod default/deploy-nginx-5cfbcf5f65-gsjnm
+evicting pod default/db
+pod/db evicted
+pod/deploy-nginx-5cfbcf5f65-gsjnm evicted
+node/toojeynode2-virtualbox drained
+```
+
+|options|descriptions|
+|--|--|
+|--ignore-daemonsets|Contoller에 의해 실행되는 pod를 제거할 수 있도록 한다.(controller에 의해서 관리되는 pod는 제거되어도, controller에 의해 다시 실행되기 때문에, 해당 옵션을 설정하지 않으면 해당 node에 대한 drain이 불가능하다.|
+|--force|controller가 아닌 pod 자체만으로 실행되는 경우, drain 되지 않는데, 이는 중요한 pod가 삭제되는 것을 방지하기 때문이다. 하지만 이를 삭제하기 위해 --force 옵션을 지정하면 된다.|
+
+Drain 설정을 하게 되면 아래와 같이 cordon 설정과 동일한 형태로, status가 표기된다.
+```sh
+toojey-master@toojeymaster-VirtualBox:~/kubernetes$ kubectl get nodes
+NAME                      STATUS                     ROLES           AGE   VERSION
+toojeymaster-virtualbox   Ready                      control-plane   21d   v1.25.0
+toojeynode1-virtualbox    Ready                      <none>          21d   v1.25.0
+toojeynode2-virtualbox    Ready,SchedulingDisabled   <none>          21d   v1.25.0
+```
+
+
+**Drain을 제거하기 위해서는, uncordon을 활용하면 된다.**
+
+### Practice
+
+![drain_get_pods1](/assets/images/kubernetes/drain_get_pods1.jpg)
+
+위와 같이 pod가 동작중인 상황에서, node2에 대해서, drain을 설정하게 되면 아래와 같이 node2에서 실행되는 모든 pod가 제거된다. controller에 의해서 관리되는 pod는 다른 node에 pod를 배치하게 된다.
+
+![drain_node](/assets/images/kubernetes/drain_node.jpg)
+
+
+
+
+
+
+
+
+
+
+
 ## References
 
 ### 영상
