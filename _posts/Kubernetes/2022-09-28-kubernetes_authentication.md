@@ -31,6 +31,7 @@ current-context: kubernetes-admin@kubernetes
 ![kubernetes_admin_certificate](/assets/images/kubernetes/kubernetes_admin_certificate.jpg)
 
 쿠버네티스는 authentication 이외에도 authorization, admission control의 작업 과정을 거쳐서 API에 대한 접근을 제어하게 된다.
+
 ![kubernetes_command_flow](/assets/images/kubernetes/kubernetes_command_flow.jpg)
 
 ## Authentication
