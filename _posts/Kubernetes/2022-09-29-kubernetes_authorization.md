@@ -40,7 +40,8 @@ rules:
   - update
   - delete       
 ```
-apiGroups에는 사용하는 api에 종류를 명시해야되는데, deployments의 경우 apps api를 사용하기 때문에, deployments에 대한 권한을 할당하고자 하는 경우 apiGroups에 apps를 추가한다.
+apiGroups에는 사용하는 api에 종류를 명시해야된다.
+가령, deployments에 대한 권한을 설정하는 경우 deployments은 apps api를 사용하기 때문에, apiGroups에 apps를 추가해야 한다.
 
 resources에 작업하고자하는 resource의 종류를 명시한다.
 
@@ -73,6 +74,11 @@ subjects:
   kind: User
   name: myuser                                     
 ```
+
+|property|descriptions|
+|--|--|
+|roleRef|role 설정|
+|subjects|role을 사용하는 주체에 대한 설정|
 
 ### Practice
 
@@ -301,7 +307,8 @@ PolicyRule:
   poddisruptionbudgets.policy/status           []                 []              [get list watch]
   poddisruptionbudgets.policy                  []                 []              [get list watch]
 ```
-cluster-admin clustterrole을 확인하면 모든 resource에 대한 모든 권한을 부여하는 것을 확인할 수 있다. **이는 kubernetes-admin과 동일한 권한을 가지는 것으로, 이를 함부러 다른 유저에 할당해서는 안된다.**
+cluster-admin clustterrole을 확인하면 모든 resource에 대한 모든 권한을 부여하는 것을 확인할 수 있다. 
+**이는 kubernetes-admin과 동일한 권한을 가지는 것으로, 이를 함부러 다른 유저에 할당해서는 안된다.**
 
 ```sh
 toojey-master@toojeymaster-VirtualBox:~/kubernetes/myuser$ kubectl describe clusterrole cluster-admin 
