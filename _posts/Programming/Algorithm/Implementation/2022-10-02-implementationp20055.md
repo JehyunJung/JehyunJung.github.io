@@ -8,7 +8,6 @@ tags:
   - implementation
   - codetest
   - programmers
-  - try_again
 ---
 # [BOJ] Q20055 컨베이어 벨트 위의 로봇  
 ## [Question](https://www.acmicpc.net/problem/20055)
