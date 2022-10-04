@@ -225,7 +225,7 @@ sudo apt install -y nfs-common portmap
 ## References
 
 ### 영상
-[따배쿠](https://www.youtube.com/watch?v=b457Nrk9GKk&list=PLApuRlvrZKohaBHvXAOhUD-RxD0uQ3z0c&index=28)
+[따배쿠](https://www.youtube.com/watch?v=yFqeoeR3l6Q&list=PLApuRlvrZKohLYdvfX-UEFYTE7kfnnY36&index=5)
 
 ### 공식문서
 [Docker 공식문서](https://docs.docker.com/desktop/install/ubuntu/)

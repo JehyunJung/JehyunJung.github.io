@@ -288,7 +288,7 @@ root@genid-volume:/etc/nginx/conf.d#
 ## References
 
 ### 영상
-[따배쿠](https://www.youtube.com/watch?v=b457Nrk9GKk&list=PLApuRlvrZKohaBHvXAOhUD-RxD0uQ3z0c&index=28)
+[따배쿠](https://www.youtube.com/watch?v=xyGTvkKzrB4&list=PLApuRlvrZKohaBHvXAOhUD-RxD0uQ3z0c&index=34)
 
 ### 공식문서
 [Docker 공식문서](https://docs.docker.com/desktop/install/ubuntu/)

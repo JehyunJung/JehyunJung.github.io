@@ -199,7 +199,7 @@ Secret etcd에 텍스트 형태로 데이터가 저장되기 때문에, secret v
 ## References
 
 ### 영상
-[따배쿠](https://www.youtube.com/watch?v=b457Nrk9GKk&list=PLApuRlvrZKohaBHvXAOhUD-RxD0uQ3z0c&index=28)
+[따배쿠](https://www.youtube.com/watch?v=aW2RAVnOHFY&list=PLApuRlvrZKohaBHvXAOhUD-RxD0uQ3z0c&index=35)
 
 ### 공식문서
 [Docker 공식문서](https://docs.docker.com/desktop/install/ubuntu/)

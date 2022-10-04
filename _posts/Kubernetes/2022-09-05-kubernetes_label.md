@@ -359,7 +359,7 @@ spec:
 ## References
 
 ### 영상
-[따배쿠](https://www.youtube.com/watch?v=b457Nrk9GKk&list=PLApuRlvrZKohaBHvXAOhUD-RxD0uQ3z0c&index=28)
+[따배쿠](https://www.youtube.com/watch?v=yf5syEBAg2Y&list=PLApuRlvrZKohaBHvXAOhUD-RxD0uQ3z0c&index=30)
 
 ### 공식문서
 [Docker 공식문서](https://docs.docker.com/desktop/install/ubuntu/)
