@@ -7,7 +7,7 @@ categories:
 tags:
   - implementation
   - codetest
-  - programmers
+  - boj
   - try_again
 ---
 # [BOJ] Q5373 큐빙
