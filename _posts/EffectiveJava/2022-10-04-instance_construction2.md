@@ -9,305 +9,222 @@ tags:
  - EffectiveJava
  - Clear Coding
 ---
+
 # "Effective Java"  
 
-## Item 1: Use Static Factory for Instance Creation
+## Item 4: Enforce noninstantiability with private constructor
+
+java에서 클래스를 만들어서 사용하는 경우, 정적 메소드,변수를 이루어진 utility class를 만드는 경우가 종종 있다.
+
+1. java.util.math와 같이 함수, 변수를 모아놓은 클래스
+2. java.util.Collections 처럼 static factory를 모아놓은 클래스
+3. final 클래스를 모아놓은 class
+
+위와 같은 클래스에 대해서는 인스턴스를 생성하지 않는 것을 전제로 한다.
+
+기본적으로 default constructor가 생성되기 때문에, 이러한 클래스에 대해서 인스턴스를 생성하는 것을 방지하기 위해 private constructor을 활용한다.
 
 ```java
-public static Boolean valueOf(boolean b){
-    return b ? Boolean.TRUE : Boolean.FALSE;
-}
-```
-
-위의 방식 처럼 인스턴스를 생성할때, static factory method 방식으로 인스턴스를 생성할 수 있다.
-
-> ### 장점
-
-1. static method으로 이름을 가지기 때문에, 해당 인스턴스가 어떠한 인스턴스를 반환하는 지에 대한 정보를 명확하게 메소드 이름을 통해서 나타낼 수 있다.
-또한, 이름을 통해 구분할 수 있기 때문에, 다양한 매개변수를 가지는 생성자를 대체할 수 있다.
-2. 매 호출 마다 새로운 인스턴스를 생성하지 않는다.
-3. 반환형의 하위 타입을 반환할 수 있다.
-4. 어떤 매개변수를 사용하는냐에 따라 매번 다른 반환형을 설정할 수 있다.
-5. static method을 작성하는 시점에 반환형 클래스가 없어도 된다.
-
-> ### 단점
-
-1. public, protected 생성자를 가지지 않는 클래스에 대해서는 하위 타입의 클래스를 반환받을 수 없다. 이는 상속을 사용하면서 나타나는 문제로, composition 방식을 통해 객체를 변수로 가지고 있게 되면 해당 문제는 발생하지 않는다.
-2. static method을 위치하기 어려울 수 있다.
-
-> ### Naming Static Methods
-
-- from : 매개변수를 하나만 받아서 해당 타입의 인스턴스를 반환하는 메서드
-  ```java
-  Date date = Date.from(dateStr);
-  ```
-- of: 여러 매개변수를 받아 적합한 타입의 인스턴스를 반환하는 집계 메서드
-  ```java
-  Set<Rank> faceCards = EnumSet.of(JACK, QUEEN, KING);
-  ```
-- valueOf: from과 of의 더 자세한 버전
-  ```java 
-  BigInteger prime = BigInteger.valueOf(Integer.MAX_VALUE);
-  ```
-- instance(getInstance):매개변수를 받는다면, 매개변수로 명시한 인스턴스를 반환하지만, 같은 인스턴스임을 보장하지 않는다. 싱글턴일 수도 있다.
-  ```java 
-  StackWalker luke = StackWalker.getInstance(options);
-  ```
-- create(newInstance): instance/getInstance와 같지만, 매번 새로운 인스턴스를 반환함을 보장한다.
-- getType:getInstance와 맥락은 같으나 특정 Type을 반환할 때 사용
-  ```java
-  Steak steak = Food.getSteak(Meet.BEEF);
-  ```
-- newType: newInstance와 같으나, 생성할 클래스가 아닌 다른 클래스의 팩터리 메서드를 정의 할 때 사용
-  ```java 
-  Steak steak = Food.newSteak(Meet.BEEF);
-  ```
-- Type: getType, newType의 같결한 버전
-  ```java
-  Steak steak = Food.steak(Meet.BEEF);
-  ```
-
-## Item 2: Use Builder when faced with many constructor parameters
-
-```java
-class NutritionFacts{
-    private final int servingSize;
-    private final int servings;
-    private final int calories;
-    private final int fat;
-    private final int sodium;
-    private final int carbohydrate;
-    
-    public static class Builder{
-        // 필수 매개변수
-        private final int servingSize;
-        private final int servings;
-        
-        // 선택 매개변수
-        private int calories     = 0;
-        private int fat          = 0;
-        private int sodium       = 0;
-        private int carbohydrate = 0;
-        
-        public Builder(int servingSize, int servings) {
-            this.servingSize = servingSize;
-            this.servings = servings;
-        }
-        
-        public Builder calories(int calories){
-            this.calories = calories;
-            return this;
-        }
-        
-        public Builder fat(int fat){
-            this.fat = fat;
-            return this;
-        }
-        
-        public Builder sodium(int sodium){
-            this.sodium = sodium;
-            return this;
-        }
-        
-        public Builder carbohydrate(int carbohydrate){
-            this.carbohydrate = carbohydrate;
-            return this;
-        }
-        
-        public NutritionFacts build(){
-            return new NutritionFacts(this);
-        }
-    }
-    
-    private NutritionFacts(Builder builder){
-        servingSize  = builder.servingSize;
-        servings     = builder.servings;
-        calories     = builder.calories;
-        fat          = builder.fat;
-        sodium       = builder.sodium;
-        carbohydrate = builder.carbohydrate;
+public class UtilityClass {
+    // 기본 생성자가 만들어지는 것을 막는다(인스턴스화 방지용).
+    // 악의적 리플렉션을 막을 수 있다.
+    private UtilityClass() {
+        throw new AssertionError();
     }
 }
 ```
 
-아래와 같은 방식으로 필요한 parameter만 받아서 객체를 생성할 수 있다.
+## Item 5: prefer dependency injection to hardwiring resources
+
+특정 자원을 활용하는 클래스가 존재하는데, 이는 동작에 따라 넘겨주는 자원의 종류가 달라지게 된다. Spring에서의 Repository를 살펴보면 JPA, H2 등 여러 가지 DB instance에 대한 repository를 DI를 통해 주입할 수 있다.
+
+이 같이, 필요에 따라 다른 자원을 활용하는 클래스에 대해서 아래와 같이 DI를 활용한다.
 
 ```java
-NutritionFacts cocaCola = new NutritionFacts.Builder(240, 8)
-    .calories(100)
-    .sodium(35)
-    .carbohydrate(27).build();
+public class SpellChecker {
+    private final Lexicon dictionary;
+    
+    // 여기서 의존성 주입을!
+    public SpellChecker(Lexicon dictionary){
+        this.dictionary = Objects.requireNotNull(dictionary);
+    }
+    
+    public static boolean isVaild(String word) {...}
+    public static List<String> suggestions(String typo) {...}
+        }
 ```
 
-이러한 빌더 패턴을 이용해서 계층 구조에도 활용할 수 있다.
+## Item 6: Avoid creating unnecessary objects
 
 ```java
-public abstract class Pizza{
-    public enum Topping { HAM, MUSHROOM, ONION, PEPPER, SAUSAGE }
-    final Set<Topping> toppings;
-        
-    abstract static class Builder<T extends Builder<T>>{
-        EnumSet<Topping> toppings = EnumSet.noneOf(Topping.class);
-            public T addTopping(Topping topping){
-                toppings.add(Objects.requireNonNull(topping));
-                return self();
+new String() vs ""
+```
+
+String 클래스를 통한 string 객체를 생성하는 것은 불필요한 string instance를 만들게 된다. 반면 ""를 통해 만들어진 string 객체는 immutable instance로 언제든지 재사용이 가능하다.
+
+인스턴스 생성 비용이 큰 경우 캐싱을 통한 재사용을 고려한다.
+
+아래의 String.matches 메소드는 matches를 호출하는 매번의 과정에서 Final State Machine을 만들게 되어 생성비용이 높다.
+
+```java
+public class RomanNumerals {
+    static boolean isRomanNumeral(String s) {
+        return s.matches("^(?=.)M*(C[MD]|D?C{0,3})" +
+            "(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})");
+    }
+}
+```
+
+이러한 불필요한 시간을 줄이기 위해 pattern instance를 생성해놓고, 계속해서 재사용할 수 있도록 한다.
+
+```java
+public class RomanNumerals {
+    private static final Pattern ROMAN = Pattern.compile("^(?=.)M*(C[MD]|D?C{0,3})" +
+        "(X[CL]|L?X{0,3})(I[XV]|V?I{0,3})");
+    
+    static boolean isRomanNumeral(String s) {
+        return ROMAN.matcher(s).matches();
+    }
+}
+```
+
+또한, autoboxing을 활용하게 되면 매 연산을 수행하는 과정에서 매번 새로운 box instance를 만들게 된다. 아래의 sum은 Long instance으로 정의되어, 매번 primitive type인 long과의 연산과정에서 매번 새로운 Long instance을 생성하게 되어 불필요한 인스턴스가 생성된다.
+
+```java
+public class Sum {
+    private static long sum() {
+        Long sum = 0L;
+        for (long i = 0; i <= Integer.MAX_VALUE; i++) {
+            sum += i;
+        }
+        return sum;
+    }
+}
+```
+object pool을 이용해서 추가적인 객체 생성을 방지하는 방법도 있지만, DB Connection 생성과 같이 객체 생성과정이 무겁지 않은 이상 object pool은 사용하지 않는다. object pool를 이용하게 되면 오히려 코드를 복잡하게 만들고, 성능에 부정적인 영향을 끼친다.
+
+추가적인 객체 생성이 항상 안좋은 것은 아니다. 명확성, 간결성, 기능을 고려한 객체 생성은 오히려 좋은 효과를 보인다.
+
+
+## Item 7: Eliminate Obsolete object references
+
+사용이 끝난 객체에 대해서는 자원을 해제해야한다. java의 Garbage Collector가 있어, 자원 해제 과정이 자동을 동작할 것이라는 기대를 할 수 있지만 아래와 같은 경우에는 GC가 동작하지 않는다.
+
+```java
+public class Stack {
+    private Object[] elements;
+    private int size = 0;
+    private static final int DEFAULT_INITIAL_CAPACITY = 16;
+    
+    public Stack() {
+        elements = new Object[DEFAULT_INITIAL_CAPACITY];
+    }
+    
+    public void push(Object e) {
+        ensureCapacity();
+        elements[size++] = e;
+    }
+    
+    public Object pop() {
+        if (size == 0) {
+            throw new EmptyStackException();
+        }
+        return elements[--size];
+    }
+    
+    private void ensureCapacity() {
+        if (elements.length == size) {
+            elements = Arrays.copyOf(elements, 2 * size + 1);
+        }
+    }
+}
+```
+
+pop메소드를 살펴보면, size를 줄이는 과정만 있고, 기존에 사용하던 자리에 할당된 object의 메모리를 해제하지 않는다. 이는 스택에서 다쓴 참조(obsolete reference)를 가지고 있기 때문이다. 즉, 해당 객체에 더 이상 참조가 없는 경우에도, obsolete reference로 인해 Garbage Collector을 통한 메모리 해제가 발생하지 않는다는 것이다.
+
+이를 해결하기 위해 아래와 같이 null를 이용해서 더이상 참조가 발생하지 않는 객체에 대해 자원을 해제한다.
+
+```java
+public Object pop() {
+    if (size == 0)
+        throw new EmptyStackException();
+    Object result = elements[--size];
+    elements[size] = null; // 다 쓴 참조 해제
+    return result;
+}
+```
+
+위 stack 클래스 처럼 클래스에 자신만의 저장소를 가지는 클래스에 대해서는 null을 이용해서 GC에 해당 객체가 더이상 참조될일이 없어 메모리 해제를 하도록 요청할 수 있다.
+
+## Item 8: Avoid using finalizer and cleaner
+
+finalizer와 cleaner와 같은 객체 소멸자 메소드 사용을 지양해야한다.
+
+1. 우선, 객체 소멸 과정이 즉각적으로 발생하지 않는다는 문제점이 있다.
+그래서, file-close와 같이 즉각적으로 실행되어야 하는 연산을 finalizer, cleaner 내부에서 동작하도록 하면 안된다.
+
+2. 성능상으로 악영향을 끼친다.
+일반적으로 finalizer을 통한 객체 소멸 과정은 시간이 많이 소요되는 무거운 연산이다. finalizer 보다 Auto-Closeable 객체를 통한 자동 소멸 과정을 활용하는 방안이 시간을 효율적으로 활용이 가능하다.
+
+3. 심각한 보안 문제를 가진다.
+생성자, 직렬화 과정에서 예외가 발생하게 되면 미완성된 하위 클래스의 finalizer가 동작하여 staic field에 객체를 할당해서 객체의 소멸과정을 방지하는 문제를 낳게 된다.
+
+보통 finalizer와 cleaner은 자원의 소유자가 close를 호출 하지 않는 경우에 대한 안전망 역할을 하기 위해 사용된다. --> 하지만 정상적으로 동작을 하리라는 보장은 없다.
+
+## Item 9: Prefer try-with-resources to try-finally
+
+Try-finally 구문을 이용해서 예외가 발생하더라도 특정 연산이 항상 동작하도록 강제할 수 있다. 
+
+```java
+// 자원 하나 회수
+static String firstLineOfFile(String path) throws IOException {
+    BufferedReader br = new BufferedReader(new FileReader(path));
+    try {
+        return br.readLine();
+    } finally {
+        br.close();
+    }
+}
+```
+
+하지만 아래와 같이 자원을 여러개 활용하는 경우에 대해서는, try-finally 구문을 사용하면 오히려 복잡해진다. 
+
+```java
+// 자원 복수개 회수
+static void copy(String src, String dst) throws IOException {
+    InputStream in = new FileInputStream(src);
+    try {
+        OutputStream out = new FileOutputStream(dst);
+        try {
+            byte[] buf = new byte[BUFFER_SIZE];
+            int n;
+            while ((n = in.read(buf)) >= 0) {
+                out.write(buf, 0, n);
             }
-            abstract Pizza build();
-            
-            protected abstract T self();
-                  
-            Pizza(Builder<?> builder){
-                toppings = builder.toppings.clone();
-            }
-    }
-                
-}
-
-public class NyPizza extends Pizza{
-    public enum Size { SMALL, MEDIUM, LARGE }
-    private final Size size;
-    
-    public static class Builder extends Pizza.Builder<Builder>{
-        private final Size size;
-        
-        public Builder(Size size){
-            this.size = Objects.requireNonNull(size);
+        } finally {
+            out.close();
         }
-        
-        @Override public NyPizza build(){
-            return new NyPizza(this);
-        }
-        
-        @Override protected Builder self(){
-            return this;
-        }
+    } finally {
+        in.close();
     }
-    
-    private NyPizza(Builder builder){
-        super(builder);
-        size = builder.size();
-    }
-    
-    }
- 
-
-public class Calzone extends Pizza{
-    private final boolean sauceInside;
-    
-    public static class Builder extends Pizza.Builder<Builder>{
-        private boolean sauceInside = false;
-        
-        public Builder sauceInside(){
-            sauceInside = true;
-            return this;
-        }
-        
-        @Override public Calzone builde(){
-            return new Calzone(this);
-        }
-        
-        @Override protected Builder self(){ return this; }
-    }
-    private Calzone(Builder builder){
-        super(builder);
-        sauceInside = builder.sauceInside;
-    }
-    }
-
-// 객체 생성
-NyPizza pizza = new NyPizza.Builder(SMALL)
-    .addTopping(SAUSAGE).addTopping(ONION).build();
-Calzone calzone = new Calzone.Builder()
-    .addTopping(HAM).sauceInside().build();
-```
-
-위의 빌더 패턴을 통한 객체 생성 방식을 보면 알듯, method chaining 방식으로 연달아서 builder 클래스를 활용한 객체 생성이 가능하다.
-
-하지만 아래의 단점들도 존재한다.
-
-> ### 단점
-
-1. 객체를 생성하고자 할때, 빌더 클래스를 만들어야한다는 문제가 발생한다. 
-2. 기존 생성자를 만드는 것보다 더 복잡하기 때문에, 매개변수가 많은 경우에만 활용하도록 한다.
-
-## Item 3: Enforce Singleton property with private contsructor or enum type
-
-싱글톤이란, 어플리케이션 동작과정에서 객체를 하나만 생성해서, 해당 객체를 공유하는 방식이다. 대표적으로 Java Spring에서 container는 Spring Bean을 Singleton 객체로 관리한다.
-
-
-### Making Singleton Instances
-
-1. #### public final 방식의 static method 활용
-
-```java
-public class Elvis {
-    public static final Elvis INSTANCE = new Elvis();
-    private Elvis { ... }
-    public void leaveTheBuilding() { ... }
-```
-> 장점 
-
-public staic final을 통해 생성과 즉시 초기화를 진행하도록 하며, private type의 constructor을 통해 외부에서 constructor을 호출할 수 없도록 한다.
-
-> 단점
-
-다만, 권한이 있는 클라이언트에서 리플렉션 API인 AccessibleObject.setAccessible을 사용해 private 생성자를 호출 할 수 있다.
-
-2. #### static factory method를 통해 public staic 객체 초기화
-
-```java
-public class Elvis {
-    private static final Elvis INSTANCE = new Elvis();
-    private Elvis { ... }
-    public static Elvis getInstance() {return INSTANCE;}
-    
-    public void leaveTheBuilding() { ... }
 }
 ```
->장점
+try, finally 영역 모두에서 에러가 발생할 수 있는데, 이럴때 문제가 발생한다. out.write에서 에러가 발생하게 되면 자동적으로 close에서도 에러가 발생하게 되는데, 이때 가장 먼저 발생되는 에러에 의해 나머지 에러들이 감춰지게 된다. 이에 따라 추후 에러 디버깅이 불가능하다.
 
-1. API 변경 없이, static factory method을 통해 싱글톤 여부를 조정가능하다
-2. 정적 팩터리를 제네릭 싱글턴 팩터리로 만들 수 있다.
-3. 정적 팩터리의 메서드 참조를 supplier로 사용할 수 있다.
-  ```java
-  Elvis::instance
-  ```
 
-> 단점
-
-1. 위의 리플렉션 API를 통한 private constructor 호출이 가능하다는 점이 존재
-2. 해당 singleton class을 serializable하게 설정하려면, 모든 필드를  transient 처리해야되며 readResolve 메소드를 구현해야한다. 그렇지 않으면 deserialize 과정에서 매번 새로운 인스턴스가 생성된다.
-
-  ```java
-  private Object readResolve() {
-    // '진짜' Elvis를 반환하고, 가짜 Elvis는 가비지 컬렉터에 맡다.
-    return INSTANCE;
-  }
-  ```
-
-3. #### enum type을 통한 싱글톤 인스턴스 생성
+이럴 때, try-with-resources를 통해 close를 자동으로 해주는 형태로 활용할 수 있다. 단, Auto-Closeable 한 객체에 대해서만 try-with-resources를 이용하는 것이 가능하다.
 
 ```java
-public enum Elvis {
-    INSTANCE;
-    public void leaveTheBuilding() { ... }
+static void copy(String src, String dst) throws IOException {
+    try (InputStream in = new FileInputStream(src);
+        OutputStream out = new FileOutputStream(dst)) {
+        byte[] buf = new byte[BUFFER_SIZE];
+        int n;
+        while ((n = in.read(buf)) >= 0) {
+            out.write(buf, 0, n);
+        }
+    }
 }
 ```
 
-> 장점
-
-1. 간결하면서, 직렬화가 가능하다
-2. 위의 2가지 방식에서 갖는 reflection api 문제가 발생하지 않는다.
-3. 보통 위와 같이 하나의 원소만을 갖는 enum type 싱글톤이 싱글톤을 구현하는 최선의 방안이다.
-
-> 단점
-
-1. enum type 방식의 싱글톤을 이용하는 경우 상속을 이용할 수 없다.
-
-
-
-  
-
-
-
-
+try-with-resource에서도 에러가 발생할 수 있다. 만일, out.write와 close 동작에서 에러가 발생하더라도 맨 첫번째 발생한 에러인 out.write가 에러가 출력되며, close 메소드 동작과정에서 발생한 에러는 나중에 stack-trace를 이용해서 에러를 추적할 수 있다(연쇄적인 메소드 호출과정으로 인해 stack trace에 기록된다.)

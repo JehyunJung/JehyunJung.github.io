@@ -3,11 +3,11 @@ title: "Effective Java"
 excerpt: "Item 1~3"
 
 categories:
- :Java
+ - Java
 tags:
- :Java
- :EffectiveJava
- :Clear Coding
+ - Java
+ - EffectiveJava
+ - Clear Coding
 ---
 # "Effective Java"  
 
