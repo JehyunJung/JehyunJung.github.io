@@ -1,6 +1,6 @@
 ---
 title: "Effective Java"
-excerpt: "Item 4~6"
+excerpt: "Item 4~9"
 
 categories:
  - Java
