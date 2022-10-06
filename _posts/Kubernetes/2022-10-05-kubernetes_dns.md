@@ -180,7 +180,7 @@ options ndots:2 edns0
 ## References
 
 ### 영상
-[따배쿠](https://www.youtube.com/watch?v=EKTq5QaV-w8&list=PLApuRlvrZKohLYdvfX-UEFYTE7kfnnY36&index=7)
+[따배쿠](https://www.youtube.com/watch?v=vhsyWMnc2f8&list=PLApuRlvrZKohLYdvfX-UEFYTE7kfnnY36&index=8)
 
 ### 공식문서
 [Docker 공식문서](https://docs.docker.com/desktop/install/ubuntu/)
