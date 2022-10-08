@@ -542,7 +542,9 @@ Cross-Origin Resource Sharing의 약어로, client에서 server로부터 리소�
 cors는 프론트엔드와 백엔드 간에 통신 과정에 있어 자주 발생하는 에러로, 프론트 엔드에서 요청하는 서버 포트와 실제 백엔 서버의 포트 서로 일치하지 않는 경우이다. 이럴때, 프론트엔트 서버 단에 프록시 서버를 놓아서 CORS 문제를 해결할 수 있다.
 
 [cors이해하기](https://it-eldorado.tistory.com/163)
+
 [cors이해하기2](https://taekjunsim.github.io/develop/proxy/)
+
 [cors영산](https://www.youtube.com/watch?v=-2TgkKYmJt4)
 
 ## References
