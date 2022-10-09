@@ -55,20 +55,235 @@ OOP(Object Oriented Programming)은 프로그램을 객체의 집합으로 이�
 
 ### 객체의 특징
 
-> 추상화
+#### 추상화
 
 공통된 성질을 추출하여 핵심적인 개념, 기능을 간추려내는 것을 의미하며, 이를 통해 하나의 공통된 추상 클래스로 정의할 수 있다.
 
 예를 들어, 자동차, 지게차와 같이 2개의 객체가 있을 때, 이 둘은 움직이다 와는 같은 기능으로 추상화를 시킬 수 있다.
 
+추상화를 적용하는 방식은 interface를 활용하는 방법과 추상클래스를 이용하는 방식이다.
+
+> 인터페이스
+
+```java
+interface Moveable{
+    void move();
+}
+
+class Car implements Moveable{
+    ...
+    @Override
+    void move(){
+        System.out.println("Car Moving");
+    }
+}
+
+class SuperCar implements Moveable{
+    ...
+    @Override
+    void move(){
+        System.out.println("SuperCar Moving");
+    }
+}
+```
+
+> 추상 클래스
+
+```java
+public abstract class Moveable{
+    public void info(){
+        System.out.println("This is a moveable object");
+    }
+    public abstract move();
+}
+
+class Car extends Moveable{
+    ...
+    @Override
+    void move(){
+        System.out.println("Car Moving");
+    }
+}
+
+class SuperCar extends Moveable{
+    ...
+    @Override
+    void move(){
+        System.out.println("SuperCar Moving");
+    }
+}
+
+```
 
 > 다형성
 
 하나의 메소드가 다양한 방식으로 동작되는 것을 의미한다. 가령 상속관계에 있는 클래스에 대해서, 하위 클래는 상위 클래스의 메소드를 오버라이딩해서 하위 클래스에 맞게 구현하게 된다. 이때 상위 클래스의 메소드를 호출하게 되면 각각의 하위클래스에 대해서는 서로 다르게 동작을 하게 되는 것이다. 
 
+```java
+class Animal {
+    public void bark() {
+        System.out.println("mumu! mumu!");
+    }
+}
+
+class Dog extends Animal {
+    @Override
+    public void bark() {
+        System.out.println("wal!!! wal!!!");
+    }
+}
+
+class Cat extends Animal {
+    @Override
+    public void bark() {
+        System.out.println("Meow Meow");
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Animal[] animals=new Animal[2];
+        animals[0]=new Dog();
+        animals[1]=new Cat();
+
+        for(Animala animal: animals){
+            animal.bark();
+        }
+    }
+}
+```
+
 > 캡슐화
 
+객체의 속성, 메소드를 하나의 클래스 형태로 묶어서 외부에 해당 구체 내용을 감추어서 불필요한 정보의 노출을 막을 수 있다. 또한 구체적인 내용을 알필요 없이 해당 클래스의 사용으로 원하는 기능의 효과를 얻을 수 있다.
+
+```java
+class SinivelCap {    //콧물 처치용 캡슐
+    void take() {
+        System.out.println("콧물 제거 완료");
+    }
+}
+
+class SneezeCap {    // 재채기 처치용 캡슐
+    void take() {
+        System.out.println("재채기 처치 완료");
+    }
+}
+
+class SnuffleCap {    //코막힘 방지용 캡슐
+    void take() {
+        System.out.println("코막힘 처치 완료");
+    }
+}
+
+public static void main(String[] args){
+    SnivelCap snivel=new SnivelCap();
+    SneezeCap sneeze=new SneezeCap();
+    SnuffleCap snuffle=new SnuffleCap();
+
+    //복용 순서 1
+    snivel.take();
+    sneeze.take();
+    snuffle.take();
+
+    //복용 순서 2
+    sneeze.take();
+    snivel.take();
+    snuffle.take();
+}
+```
+위의 경우 각각의 캡슐을 정의한 클래스가 있고, 이를 take() 메소드의 호출을 이용해서 약을 복용하는 과정을 보여주고 있다.
+
+이와 같이 모든 클래스를 단독적으로 분리해서 사용하게 될 경우 구체적인 클래스를 모두 알아야 되고, 약의 복용순서가 있는 경우 사용자는 복용순서를 명확히 알고 그에 따른 순차적인 메소드 호출이 필요하다 하지만 아래와 같이 캡슐화를 이용해서 하나의 클래스로 묶어주면 코드가 간결해지고, 사용자의 편의성을 추구할 수 있다.
+
+```java
+class SinivelCap {    //콧물 처치용 캡슐
+    void take() {
+        System.out.println("콧물 제거 완료");
+    }
+}
+
+class SneezeCap {    // 재채기 처치용 캡슐
+    void take() {
+        System.out.println("재채기 처치 완료");
+    }
+}
+
+class SnuffleCap {    //코막힘 방지용 캡슐
+    void take() {
+        System.out.println("코막힘 처치 완료");
+    }
+}
+
+Class Capsule1{
+    SnivelCap snivel=new SnivelCap();
+    SneezeCap sneeze=new SneezeCap();
+    SnuffleCap snuffle=new SnuffleCap();
+
+    public void take(){
+        snivel.take();
+        sneeze.take();
+        snuffle.take();
+    }
+}
+
+Class Capsule2{
+    SnivelCap snivel=new SnivelCap();
+    SneezeCap sneeze=new SneezeCap();
+    SnuffleCap snuffle=new SnuffleCap();
+
+    public void take(){
+        sneeze.take();
+        snivel.take();
+        snuffle.take();
+    }
+}
+
+public static void main(String[] args){
+    Capsule1 capsule1=new Capsule1();
+    Capsuel2 capsule2=new Capsule2();
+
+    //복용 순서 1
+    capsule1.take();
+
+    //복용 순서 2
+    capsule2.take();
+}
+```
+
 > 상속
+
+연관된 클래스에 대해 일련의 공통 규약을 정의하는 것이 바로 상속이다. 상위 클래스를 이용해서 공통적인 특성을 묶고, 하위 클래스를 이용해서 구체화 시키는 방식으로 재사용성, 유지보수성 측면에서 매우 중요한 부분이다.
+
+```java
+class Man{
+    String name;
+
+    public void introduce(){
+        System.out.println("My name is " + name);
+    }
+}
+
+class BusinessMan extends Man{
+    String company;
+
+    @Override
+    public void introduce(){
+        super().introduce();
+        System.out.println("I'm working on " + company);
+    }
+}
+
+class Student extends Man{
+    String university;
+
+    @Override
+    public void introduce(){
+        super().introduce();
+        System.out.println("I'm studying on " + university);
+    }
+}
+```
 
 
 ### SOLID 원칙
