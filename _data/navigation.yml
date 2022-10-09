@@ -4,9 +4,9 @@ main:
     url: /about/
   - title: "T.I.L"
     url: /category/til/
-  - title: "Projects"
-    url: /projects/
-  - title: "DevLog"
+  - title: "CS"
+    url: /category/CS/
+  - title: "PostByTags"
     url: /tags/
   # - title: "About"
   #   url: https://mmistakes.github.io/minimal-mistakes/about/
