@@ -1,6 +1,6 @@
 ---
-title: "Apache Kafka"
-excerpt: ""
+title: "Apache Kafka 1"
+excerpt: "Broker, Cluster, Partitions"
 
 categories:
   - kafka
