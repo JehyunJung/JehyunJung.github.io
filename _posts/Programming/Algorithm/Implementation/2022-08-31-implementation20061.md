@@ -46,7 +46,7 @@ def move_cols(graph,start_col):
 항상 밀어내게 되면 제일 위에 있는 행 혹은 제일 왼쪽에 있는 열은 비게 된다.
 
 
-## Solution
+## Solution 1
 
 ```python
 def block_move(graph,locations,type):
@@ -195,5 +195,111 @@ if __name__ == "__main__":
     n=int(input())
     blocks=[list(map(int,input().split())) for _ in range(n)]
 
+    solution()
+```
+
+## Solution 2
+
+green box, blue box을 따로 둬서 고려하면 조금 더 쉽게 구현하는 것이다 가능하다.
+
+```python
+from os.path import dirname,join
+from collections import deque
+
+def insert_square(box,col):
+    index=0
+    while index<5:
+        if box[index+1][col]==0:
+            index+=1
+        else:
+            break
+    box[index][col]=1
+
+#1*2 직사각형 추가
+def insert_1by2_rectangle(box,col):
+    index=0
+    while index<5:
+        if box[index+1][col]==0 and box[index+1][col+1]==0:
+            index+=1
+        else:
+            break
+    box[index][col],box[index][col+1]=1,1
+
+
+#2*1 직사각형 추가
+def insert_2by1_rectangle(box,col):
+    index=0
+    while index<5:
+        if box[index+1][col]==0:
+            index+=1
+        else:
+            break
+    box[index][col],box[index-1][col]=1,1
+
+def erase_block(box):
+    erase_count=0
+    while True:
+        for index in range(2,6):
+            if sum(box[index])==4:
+                box.pop(index)  
+                box.insert(0,([0]*4))
+                erase_count+=1
+                break
+        else:
+            break
+    return erase_count
+
+def check_if_exists_and_erase(box):
+    for _ in range(2):
+        for col in range(4):
+            if box[1][col]!=0:
+                box.pop(-1)
+                box.insert(0,([0]*4))
+                break
+    
+
+def solution():
+    green_box=[[0]*4 for _ in range(6)]
+    blue_box=[[0]*4 for _ in range(6)]
+    points=0
+    for t,row,col in blocks:
+        green_index,blue_index=0,0
+        if t==1:
+            insert_square(green_box,col)
+            insert_square(blue_box,row)
+        elif t==2:
+            insert_1by2_rectangle(green_box,col)
+            insert_2by1_rectangle(blue_box,row)
+
+        elif t==3:
+            insert_2by1_rectangle(green_box,col)
+            insert_1by2_rectangle(blue_box,row)
+        
+        #특정 행/열이 가득 차면 해당 행/열을 제거한다.
+        points+=erase_block(green_box)
+        points+=erase_block(blue_box)
+
+        #연한색 칸에 블록이 들어가는 경우에 대한 처리
+        check_if_exists_and_erase(green_box)
+        check_if_exists_and_erase(blue_box)
+
+    count=0
+    for row in range(2,6):
+        count+=sum(green_box[row])
+        count+=sum(blue_box[row])
+    
+    print(points)
+    print(count)
+
+
+
+if __name__ == "__main__":
+    scriptpath = dirname(__file__)
+    filename = join(scriptpath, 'input.txt')
+
+    #predefined globals
+    n=int(input())
+    blocks=[list(map(int,input().split())) for _ in range(n)]
+    
     solution()
 ```
