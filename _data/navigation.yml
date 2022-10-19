@@ -4,6 +4,8 @@ main:
     url: /about/
   - title: "T.I.L"
     url: /category/til/
+  - title: "Projects"
+    url: /category/project/
   - title: "CS"
     url: /category/CS/
   - title: "PostByTags"

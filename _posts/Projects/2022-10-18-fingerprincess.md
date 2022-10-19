@@ -59,6 +59,90 @@ tags:
 
 [front-end design](https://www.figma.com/file/1u3nYbvBG9CF8X4nTXiZGC/Untitled?node-id=0%3A1)
 
+reactjs를 통해 JSX 문법을 기반으로 Javascript와 HTML을 혼용해서 더욱 효과적인 UI 설계를 할수 있다.
+각각의 세부 UI 화면을 component 단위로 구조화하였고 
+
+아래의 경우는 설문지를 이루는 question에 대한 component 예시이다.
+
+> React Router 설정
+
+```js
+<Route path='/questions' exact={ true } component={ Questions } />
+```
+
+> Questions Component
+
+```js
+class Questions extends React.Component {
+  render() {
+    const {classes} = this.props;
+    return (
+      <div className={classes.root}>
+        <Grid container spacing={ 3 } >
+          <Grid item xs={ 12 }>
+            <Header />
+          </Grid>
+          <Grid item xs={ 12 }>
+            <Survey />
+          </Grid>
+        </Grid>
+      </div>
+    )
+  }
+}
+```
+
+> Survey Component
+
+```js
+<div className='Survey'>
+    <Container maxWidth='lg'>
+        <Stepper activeStep={ activeStep } orientation="vertical">
+            {/* {steps.map((step, index) => (
+                console.log(step)
+                < Step key = { index } >
+                <StepLabel>{step.label}</StepLabel>
+                <StepContent>{step.question}</StepContent>
+                </Step>
+        ))} */}
+            < Step key={ 1 } >
+                <StepLabel>{ '플레이 하는 모든 게임을 선택하세요' }</StepLabel>
+                <StepContent>
+                    <QuestionA setParentAnswer={this.setAnswer} goNextSurvey={this.handleNext} goPreviousSurvey={this.handlePrevious}/>
+                </StepContent>
+            </Step>
+            < Step key={ 2 } >
+                <StepLabel>{ '실내/실외' }</StepLabel>
+                <StepContent>
+                    <QuestionB setParentAnswer={this.setAnswer} goNextSurvey={this.handleNext} goPreviousSurvey={this.handlePrevious}/>
+                </StepContent>
+            </Step>
+            < Step key={ 3 } >
+                <StepLabel>{ '자주 사용하는 프로그램' }</StepLabel>
+                <StepContent>
+                    <QuestionC setParentAnswer={this.setAnswer} goNextSurvey={this.handleNext} goPreviousSurvey={this.handlePrevious}/>
+                </StepContent>
+
+            </Step>
+            < Step key={ 4 } >
+                <StepLabel>{ '가격 상한선' }</StepLabel>
+                <StepContent>
+                    <QuestionD setParentAnswer={this.setAnswer} goNextSurvey={this.handleNext} goPreviousSurvey={this.handlePrevious}/>
+                </StepContent>
+
+            </Step>
+            < Step key={ 5 } >
+                <StepLabel>{ '성능우선/기능우선/서비스우선' }</StepLabel>
+                <StepContent>
+                    <QuestionE setParentAnswer={this.setAnswer} goPreviousSurvey={this.handlePrevious} submitSurvey={this.hanldeSubmit}/>
+                </StepContent>
+            </Step>
+        </Stepper>
+    </Container>
+</div >
+
+```
+
 
 
 ## Backend Server
