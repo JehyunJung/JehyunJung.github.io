@@ -14,7 +14,7 @@ tags:
 # Finger Princess
 
 ## Description
-본 프로젝트는 RDF data에 대한 최적화된 질의 기능을 제공해주는 Data Platform 이다. Apache jena library을 기반으로 Memory와 SSD을 결합한 Hybrid Storage 구조를 통해 빠른 질의 처리 서비스를 제공한다.
+사용자들이 자주 사용하는 프로그램, 게임의 권장 사양에 맞춰 그에 맞는 노트북을 추천해주는 웹어플리케이션이다. 
 
 ## Collaborators
 - 한진규 [JinkyuHan](https://github.com/jinkyuhan)

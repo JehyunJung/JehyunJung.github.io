@@ -39,7 +39,7 @@ tags:
     - update, delete, switch data type
 
 
-## Developtment Environment
+## Development Environment
 - jdk version >= 1.8
 - apache tomcat 9.0
 - mysql 5.7.30
