@@ -1,6 +1,6 @@
 ---
 title: "Elastic Search 1"
-excerpt: ""
+excerpt: "Development Environment Settings"
 
 categories:
   - elastic_search
@@ -59,7 +59,6 @@ curl localhost:9200
 user/password을 설정해서 요청을 수행하면 아래와 같이 정상적으로 https 응답이 오는 것을 확인할 수 있다.
 
 ```
-[toojey@elastic1 bin]$ curl -k https://localhost:9200 -u elastic:YCx4wHf_nN1VXxdcr_=j
 {
   "name" : "elastic1",
   "cluster_name" : "elasticsearch",
@@ -107,7 +106,7 @@ user/password을 설정해서 요청을 수행하면 아래와 같이 정상적�
 > stop.sh
 
 ```sh
-kill `cat ../els.pid`
+kill `cat els.pid`
 ```
 
 
