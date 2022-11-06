@@ -36,34 +36,55 @@ layout: single
 
 ### Team Projects
 #### 1. Car Trading System
-Oracle DB와 JSP programming을 이용한 가벼운 중고차 거래 시스템 개발
+Description: Oracle DB와 JSP programming을 이용한 가벼운 중고차 거래 시스템 개발
+
+Duration: 2019-09~2019-12
 
 Skills
 - Oracle DB
 - JSP 
 - AWS
 
+Role: DB Design, Apache Tomcat Web Server, JSP
+
+Git: https://github.com/Injun-Jeong/The-Database-of-Car-Trading-Platform
+
 #### 2. Automated Flight Reservation/Product Purchase Chatbot
 
 RPA(Robotic Process 
-Automation)을 이용한 항공권 구매 및 물품 구매 자동화 챗봇 개발
+Description: Automation)을 이용한 항공권 구매 및 물품 구매 자동화 챗봇 개발
+
+Duration: 2019-03~2019-06
 
 Skills
 - RPA Uipath(자동화 프로세스 구성)
 - Flask Web server
 - Dialogflow Chatbot
 
+Role: Web Server, RPA Process
+
+Git: https://github.com/jsi9504/CDP-20191-Team10
+
 #### 3. Automated Civil Affairs handling chatbot 
 
-RPA 프로세스를 이용한 민원 처리를 자동화를 하는 챗봇을 개발
+Description: RPA 프로세스를 이용한 민원 처리를 자동화를 하는 챗봇을 개발
+
+Duration: 2019-07~2019-08
 
 Skills
 - RPA Uipath(자동화 프로세스 구성)
 - Flask Web server
 - Kakao Chatbot API
 
+Role: Flask Server, RPA Process
+
+Git: https://github.com/JehyunJung/Intern_Group
+
 #### 4. Doongji Andriod App Development
-Andriod App을 이용한 그룹단위 위치공유 시스템 개발
+
+Description: Andriod App을 이용한 그룹단위 위치공유 시스템 개발
+
+Duration: 2019-09~2019-12
 
 Skills
 - Node.js
@@ -71,22 +92,40 @@ Skills
 - MySql
 - Firebase
 
+Role: DB Design, Node.js Webserver
+
+Git: https://github.com/jinkyuhan/doongji_android
+
 #### 5. Finger Princess
-Django, React, MySQL을 활용한 노트북 추천 시스템 개발
+
+Description: Django, React, MySQL을 활용한 노트북 추천 시스템 개발
+
+Duration: 2019-12~2020-02
 
 Skills
 - Django
 - React 
 - MySql
 
+Role: DB Design, Django Webserver
+
+Git: https://github.com/jinkyuhan/finger_princess
+
 #### 6. HSS System
-RDF data를 이용한 Hybrid Strorage System
+
+Description: RDF data를 이용한 Hybrid Strorage System
+
+Duration: 2020-03~2020-06
 
 Skills
 - JSP
 - MySql
 - Hot/Cold Data Clustering
 - Machine Learning
+
+Role: Apache Tomcat Webserver, JSP, Data Classification
+
+Git: https://github.com/JehyunJung/CDP2_RDF_Platform
 
 #### 7. KNU Info
 
@@ -97,6 +136,10 @@ Skills
 - JSP
 - HTML/CSS/JS
 - MySql 
+
+Role: Apache Tomcat Webserver, JSP, Database
+
+Git: https://github.com/cheesecat47/KNU_Info
 
 ### Personal Projects
 
