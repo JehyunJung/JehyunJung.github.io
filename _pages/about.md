@@ -47,7 +47,7 @@ Skills
 
 Role: DB Design, Apache Tomcat Web Server, JSP
 
-Git: https://github.com/Injun-Jeong/The-Database-of-Car-Trading-Platform
+[Repository Link](https://github.com/Injun-Jeong/The-Database-of-Car-Trading-Platform)
 
 #### 2. Automated Flight Reservation/Product Purchase Chatbot
 
@@ -63,7 +63,7 @@ Skills
 
 Role: Web Server, RPA Process
 
-Git: https://github.com/jsi9504/CDP-20191-Team10
+[Repository Link](https://github.com/jsi9504/CDP-20191-Team10)
 
 #### 3. Automated Civil Affairs handling chatbot 
 
@@ -78,7 +78,7 @@ Skills
 
 Role: Flask Server, RPA Process
 
-Git: https://github.com/JehyunJung/Intern_Group
+[Repository Link](https://github.com/JehyunJung/Intern_Group)
 
 #### 4. Doongji Andriod App Development
 
@@ -94,7 +94,7 @@ Skills
 
 Role: DB Design, Node.js Webserver
 
-Git: https://github.com/jinkyuhan/doongji_android
+[Repository Link](https://github.com/jinkyuhan/doongji_android)
 
 #### 5. Finger Princess
 
@@ -109,7 +109,7 @@ Skills
 
 Role: DB Design, Django Webserver
 
-Git: https://github.com/jinkyuhan/finger_princess
+[Repository Link](https://github.com/jinkyuhan/finger_princess)
 
 #### 6. HSS System
 
@@ -125,7 +125,7 @@ Skills
 
 Role: Apache Tomcat Webserver, JSP, Data Classification
 
-Git: https://github.com/JehyunJung/CDP2_RDF_Platform
+[Repository Link](https://github.com/JehyunJung/CDP2_RDF_Platform)
 
 #### 7. KNU Info
 
@@ -139,17 +139,21 @@ Skills
 
 Role: Apache Tomcat Webserver, JSP, Database
 
-Git: https://github.com/cheesecat47/KNU_Info
+[Repository Link](https://github.com/cheesecat47/KNU_Info)
 
 ### Personal Projects
 
 #### 1. SNS Relation Analysis
 
-SNS Data를 활용한 연관 분석 프로젝트
+Description: SNS Data를 활용한 연관 분석 프로젝트
+
+Duration: 2020-05
 
 Skills
 - Tweepy(Tweeter api)
 - pytagcloud(WordCloud Library)
 - networkx(Relation Analysis library)
+
+[Repository Link](https://github.com/JehyunJung/SNS_Relation_Analysis)
 
 
