@@ -7,7 +7,6 @@ categories:
 tags:
   - implementation
   - codetest
-  - boj
   - samsung
 ---
 # [SWEA] Q1206 View

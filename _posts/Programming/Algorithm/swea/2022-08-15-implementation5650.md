@@ -1,5 +1,5 @@
 ---
-title: "[모의 SW 역량테스트] 5650. 핀볼 게임"
+title: "[SWEA] Q5650 핀볼 게임"
 excerpt: "Implementation"
 
 categories:
@@ -7,10 +7,9 @@ categories:
 tags:
   - implementation
   - codetest
-  - boj
   - samsung
 ---
-# [BOJ] [모의 SW 역량테스트] 5650. 핀볼 게임
+# [SWEA] Q5650 핀볼 게임
 ## [Question](https://swexpertacademy.com/main/code/problem/problemDetail.do?contestProbId=AWXRF8s6ezEDFAUo#)
 ## Language: Python
 ## Difficulty: D3

@@ -7,7 +7,6 @@ categories:
 tags:
   - implementation
   - codetest
-  - boj
   - samsung
 ---
 # [SWEA] Q1859 백만장자 프로젝트

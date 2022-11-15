@@ -8,7 +8,6 @@ tags:
   - implementation
   - bruteforce
   - codetest
-  - boj
   - samsung
 ---
 # [SWEA] Q1244 최대상금
