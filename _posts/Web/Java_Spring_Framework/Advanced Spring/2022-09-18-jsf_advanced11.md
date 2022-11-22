@@ -315,7 +315,9 @@ CGLIB 방식을 이용하면 정상적으로 DI를 받아서 구현 클래스를
 	- target 클래스를 부모 클래스로 해서 프록시가 자식 클래스가 되는 구조이다. 따라서, 자식 클래스에서는 필수적으로 부모 클래스의 생성자를 호출해야하는데, 이때 자동적으로 super()을 호출하기 때문에, target class(부모 클래스)에 대해서는 기본 생성자가 필요하다.
 
 2. 생성자가 2번 호출되는 문제점 발생
+
 ![cglib_double_constructor](/assets/images/jsf/advanced/cglib_double_constructor.png)
+
 	- 프록시 클래스를 만들때와, target 클래스를 만들 때, 총 2번에 걸쳐서 부모 클래스의 생성자가 호출된다.
 	
 3. final class, method 사용 불가능
