@@ -77,7 +77,7 @@ Resource Owner, 즉 사용자는 사용자 개인의 정보를 사용하기 위�
 
 ## Resource Server Authorization
 
-![resource_server_authorization](/assets/images/node.js/resource_server_authorization.png 
+![resource_server_authorization](/assets/images/node.js/resource_server_authorization.png)
 
 authorization code를 가지고 있는 user측에서는 다시 client로 authorization code를 보내게 된다. client 측에서는 authorization code를 이용해서 Resource Server로 Access Token을 요청해서 Resource Server는 AccessToken을 client 측에 제공하게 된다.
 
