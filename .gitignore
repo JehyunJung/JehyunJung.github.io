@@ -27,7 +27,3 @@ codekit-config.json
 .sass-cache
 _asset_bundler_cache
 _site
-
-# ignore posts
-_posts/EffectiveJava/
-_posts/Apache_Kafka/
