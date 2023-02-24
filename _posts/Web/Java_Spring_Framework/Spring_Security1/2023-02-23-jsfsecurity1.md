@@ -111,7 +111,7 @@ public Authentication attemptAuthentication(HttpServletRequest request, HttpServ
 }
 ```
 
-2. AuthenticationManager은 AuthenticationProvider로 인증을 위임하게 되면서, provider에서 인증을 수행하고, 성공적으로 마무리 되면 Authentication 객체를 반환하게 된다.
+2. AuthenticationManager은 AuthenticationProvider로 인증을 위임하게 되면서, provider에서 인증을 수행한다.
 
 ```java
 for (AuthenticationProvider provider : getProviders()) {
@@ -141,7 +141,28 @@ for (AuthenticationProvider provider : getProviders()) {
   }
 ```
 
-3. AuthenticationProvider에 의해 전달받은 Authentication 객체를 토대로 Security Context에 저장하게 되면서 해당 사용자에 대한 인증이 완료되었고 그 상태를 유지한다.
+3. AuthenticationProvider에서 username, password 기반으로 인증을 수행한다. 성공적으로 마무리 되면 Authentication 객체를 반환하게 된다.
+
+```java
+@Override
+@SuppressWarnings("deprecation")
+protected void additionalAuthenticationChecks(UserDetails userDetails,
+    UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
+  if (authentication.getCredentials() == null) {
+    this.logger.debug("Failed to authenticate since no credentials provided");
+    throw new BadCredentialsException(this.messages
+        .getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials", "Bad credentials"));
+  }
+  String presentedPassword = authentication.getCredentials().toString();
+  if (!this.passwordEncoder.matches(presentedPassword, userDetails.getPassword())) {
+    this.logger.debug("Failed to authenticate since password does not match stored value");
+    throw new BadCredentialsException(this.messages
+        .getMessage("AbstractUserDetailsAuthenticationProvider.badCredentials", "Bad credentials"));
+  }
+}
+```
+
+4. AuthenticationProvider에 의해 전달받은 Authentication 객체를 토대로 Security Context에 저장하게 되면서 해당 사용자에 대한 인증이 완료되었고 그 상태를 유지한다.
 
 ```java
 protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
@@ -391,25 +412,6 @@ protected Authentication createAuthentication(HttpServletRequest request) {
   return token;
 }
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ## References
 link: [inflearn](https://www.inflearn.com/course/%EC%BD%94%EC%96%B4-%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0/dashboard)
