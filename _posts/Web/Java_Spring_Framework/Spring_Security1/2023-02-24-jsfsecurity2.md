@@ -231,6 +231,66 @@ private void doFilter(HttpServletRequest request, HttpServletResponse response, 
 	}
 ```
 
+#### Authentication+Session
+
+실제 동작 과정을 살펴보면 SessionManagementFilter을 호출되기 보다는, 인증을 수행하고나서 바로 Session 관련 처리를 진행하게 된다. 아래의 AbstractAuthenticationProcessingFilter을 살펴보면, 인증을 수행하고나서 바로 session 관련 처리를 위해 sessionStrategy.onAuthentication() 메소드를 호출한다.
+
+> AbstractAuthenticationProcessingFilter
+
+```java
+private void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+		throws IOException, ServletException {
+	if (!requiresAuthentication(request, response)) {
+		chain.doFilter(request, response);
+		return;
+	}
+	try {
+		Authentication authenticationResult = attemptAuthentication(request, response);
+		if (authenticationResult == null) {
+			// return immediately as subclass has indicated that it hasn't completed
+			return;
+		}
+		this.sessionStrategy.onAuthentication(authenticationResult, request, response);
+		// Authentication success
+		if (this.continueChainBeforeSuccessfulAuthentication) {
+			chain.doFilter(request, response);
+		}
+		successfulAuthentication(request, response, chain, authenticationResult);
+	}
+	catch (InternalAuthenticationServiceException failed) {
+		this.logger.error("An internal error occurred while trying to authenticate the user.", failed);
+		unsuccessfulAuthentication(request, response, failed);
+	}
+	catch (AuthenticationException ex) {
+		// Authentication failed
+		unsuccessfulAuthentication(request, response, ex);
+	}
+}
+```
+
+SessionStrategy의 구현체인 CompositeSessionAuthenticationStrategy이 실행된다. 해당 클래스에서는 SecurityConfig에 등록된 Session 관련 전략에 따른 작업들이 순차적으로 처리된다. 아래의 그림을 통해 this.delegateStrategies에 strategies가 할당된 것을 확인할 수 있다.
+
+> CompositeSessionAuthenticationStrategy
+
+```java
+@Override
+public void onAuthentication(Authentication authentication, HttpServletRequest request,
+		HttpServletResponse response) throws SessionAuthenticationException {
+	int currentPosition = 0;
+	int size = this.delegateStrategies.size();
+	for (SessionAuthenticationStrategy delegate : this.delegateStrategies) {
+		if (this.logger.isTraceEnabled()) {
+			this.logger.trace(LogMessage.format("Preparing session with %s (%d/%d)",
+					delegate.getClass().getSimpleName(), ++currentPosition, size));
+		}
+		delegate.onAuthentication(authentication, request, response);
+	}
+}
+```
+
+![session_strategies](/assets/images/jsf/Spring_Security/session_strategies.png)
+
+
 ## Authorization
 
 Spring Security를 활용하여 각 접속 경로에 대한 권한을 표현할 수 있다.
