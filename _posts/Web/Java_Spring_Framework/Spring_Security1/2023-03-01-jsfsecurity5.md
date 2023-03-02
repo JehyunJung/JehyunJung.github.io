@@ -203,6 +203,33 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 }
 ```
 
+만들어준 Provider에 대해서 AuthenticationManager에 등록해주는 작업을 진행해야한다.
+
+> Security Config
+
+```java
+private final AuthenticationConfiguration authenticationConfiguration;
+
+private final UserDetailsService customUserDetailsService;
+
+
+@Bean
+public PasswordEncoder passwordEncoder(){
+    return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+}
+@Bean
+public CustomAuthenticationProvider customAuthenticationProvider(){
+    return new CustomAuthenticationProvider(customUserDetailsService,passwordEncoder());
+}
+
+@Bean
+public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfiguration) throws Exception {
+    ProviderManager authenticationManager = (ProviderManager)authConfiguration.getAuthenticationManager();
+    authenticationManager.getProviders().add(0, customAuthenticationProvider());
+    return authConfiguration.getAuthenticationManager();
+}
+```
+
 ## Login Form Page
 
 spring security에서 기본적으로 login page를 생성해서 사용자에게 전달할 수 있지만, 직접 로그인 화면을 구현한 경우 아래와 같이 설정작업을 진행한다. default으로 설정된 아이디와 패스워드에 대한 파라미터 이름은 username, password이므로 form tag에서 해당 파라미터명을 활용해야된다.
