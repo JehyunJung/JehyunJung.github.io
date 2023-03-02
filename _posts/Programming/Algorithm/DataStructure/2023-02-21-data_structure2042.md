@@ -1,5 +1,5 @@
 ---
-title: "[BOJ] Q2042"
+title: "[BOJ] Q2042 구간 합 구하기"
 excerpt: "Implementation"
 
 categories:
@@ -10,7 +10,7 @@ tags:
   - boj
 
 ---
-# [BOJ] Q2042
+# [BOJ] Q2042 구간 합 구하기
 ## [Question](https://www.acmicpc.net/problem/2042)
 ## Language: Python
 ## Difficulty: Gold 1
