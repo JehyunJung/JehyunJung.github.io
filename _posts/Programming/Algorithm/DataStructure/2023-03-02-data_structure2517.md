@@ -37,10 +37,7 @@ rankings[index-1]=(index-count)
 update(segment_tree,1,1,n,index)
 ```
 
-
-
-
-## Solution
+## Solution 1
 
 ```python
 def query(trees,index,start,end,left,right):
@@ -85,5 +82,98 @@ def solution():
 if __name__ == "__main__":
     n=int(input())
     numbers=[(int(input()),i+1) for i in range(n)]
+    solution()
+```
+
+## Solution 2 
+
+혹은 이 문제는 inversion counting algorithm을 응용해서 풀이하는 것이 가능하다. inversion counting 이란 ```i<j 에 대하여 a[i]>a[j]```을 만족하는 경우에 inversion이 발생함을 의미한다. 즉 자기 보다 뒤에 있는 값이 자기 보다 작은 경우에 발생할 수 있다. 이때 이 inversion의 갯수를 구하는 것이다. 
+
+> inversion counting
+
+![2517](/assets/images/algorithm/q2517.png)
+
+위의 그림을 보면, merging sorting 과정에서 merge 과정에서 inversion 갯수를 구할 수 있다. 뒤에 오는 값이 큰 경우 앞으로 당겨야하는데, 이는 앞에 있는 공간 만큼 당겨지기 때문에, (left_length-i)로 구할 수 있다.
+
+이렇게, inversion을 구하게 되면, 이는 현재 인덱스를 기준으로 앞에 현재 값보다 작은 값의 갯수를 의마하게 되고, 현재 값보다 작은 경우 앞지를 수 있기 때문에 현재 인덱스에 대해 inversion갯수를 빼주게 되면 최선의 순위를 도출 할 수 있게 된다.
+
+```python
+def mergeSort(arr):
+    length=len(arr)
+    if length<=1:
+        return arr
+
+    mid=length//2
+
+    left=mergeSort(arr[:mid])
+    right=mergeSort(arr[mid:])
+    
+    return merge(left,right)
+
+def merge(left,right):
+    global inversions
+    i,j=0,0
+    left_length=len(left)
+    right_length=len(right)
+    temp=[]
+    while i < left_length and j < right_length:
+        if left[i][0] > right[j][0]:
+            temp.append(left[i])
+            i+=1
+        else:
+            temp.append(right[j])
+            inversions[right[j][1]]+=(left_length-i)
+            j+=1
+    
+    temp+=left[i:]
+    temp+=right[j:]
+    
+    return temp
+```
+
+> Full Code
+
+```python
+def mergeSort(arr):
+    length=len(arr)
+    if length<=1:
+        return arr
+
+    mid=length//2
+
+    left=mergeSort(arr[:mid])
+    right=mergeSort(arr[mid:])
+    
+    return merge(left,right)
+
+def merge(left,right):
+    global inversions
+    i,j=0,0
+    left_length=len(left)
+    right_length=len(right)
+    temp=[]
+    while i < left_length and j < right_length:
+        if left[i][0] > right[j][0]:
+            temp.append(left[i])
+            i+=1
+        else:
+            temp.append(right[j])
+            inversions[right[j][1]]+=(left_length-i)
+            j+=1
+    
+    temp+=left[i:]
+    temp+=right[j:]
+    
+    return temp
+
+def solution():
+    mergeSort(numbers)
+    for index in range(n):
+        print(index-inversions[index]+1)   
+        
+if __name__ == "__main__":
+    n=int(input())
+    numbers=[(int(input()),i) for i in range(n)]
+    inversions=[0]*(n+1)
     solution()
 ```
