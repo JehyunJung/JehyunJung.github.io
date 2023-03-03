@@ -7,6 +7,7 @@ categories:
 tags:
   - data_structure
   - segment_tree
+  - inversion_countings
   - boj
 
 ---
