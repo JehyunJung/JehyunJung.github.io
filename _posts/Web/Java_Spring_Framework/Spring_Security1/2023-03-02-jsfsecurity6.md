@@ -242,9 +242,214 @@ public AuthenticationManager ajaxAuthenticationManager(AuthenticationConfigurati
 public AjaxLoginProcessingFilter ajaxLoginProcessingFilter() throws Exception {
     AjaxLoginProcessingFilter ajaxLoginProcessingFilter = new AjaxLoginProcessingFilter();
     ajaxLoginProcessingFilter.setAuthenticationManager(ajaxAuthenticationManager(authenticationConfiguration));
+    ajaxLoginProcessingFilter.setSecurityContextRepository(new HttpSessionSecurityContextRepository());  //AbstractAuthenticationProcessingFilter의 기본형이 RequestAttributeSecurityContextRepository인데, 이를 활용할시에는 Session에 Security Context을 저장하는 작업을 진행하지 않게되므로, HttpSessionSecurityContextRepository로 설정하도록 한다.
     return ajaxLoginProcessingFilter;
 }
 ```
+
+### Success Handler & Failure Handler
+
+인증이 성공하거나, 실패했을 때 호출되는 handler들을 정의한다.
+
+> AjaxSuccessHandler
+
+```java
+
+@Component
+public class AjaxSuccessHandler implements AuthenticationSuccessHandler {
+    private ObjectMapper objectMapper = new ObjectMapper();
+    @Override
+    public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
+        Account account = (Account)authentication.getPrincipal();
+
+        response.setStatus(HttpStatus.OK.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        objectMapper.writeValue(response.getWriter(),account);
+    }
+}
+```
+
+> AjaxFailureHandler
+
+```java
+@Component
+public class AjaxFailureHandler implements AuthenticationFailureHandler {
+    private ObjectMapper objectMapper = new ObjectMapper();
+    @Override
+    public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
+        String errorMessage = "Invalid Username or Password";
+
+        if (exception instanceof UsernameNotFoundException) {
+            errorMessage = "Invalid Username or Password";
+        } else if (exception instanceof InsufficientAuthenticationException) {
+            errorMessage = " Invalid Secret Key";
+        }
+
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+        objectMapper.writeValue(response.getWriter(), errorMessage);
+    }
+}
+```
+
+> Security Config
+
+```java
+
+private final AjaxSuccessHandler ajaxSuccessHandler;
+private final AjaxFailureHandler ajaxFailureHandler;
+
+public AjaxLoginProcessingFilter ajaxLoginProcessingFilter() throws Exception {
+    ...
+    ajaxLoginProcessingFilter.setAuthenticationSuccessHandler(ajaxSuccessHandler);
+    ajaxLoginProcessingFilter.setAuthenticationFailureHandler(ajaxFailureHandler);
+    ...
+    return ajaxLoginProcessingFilter;
+}
+```
+
+### AuthenticationEntryPoint & AccessDeniedHandler
+
+ExceptionTranslationFilter에서 인증 예외가 발생항게 되면 AuthenticationException이 발생하게 되면서 RequestCache 처리와 AuthenticationEntrypoint을 호출하게 된다. 인가 예외가 발생했을 경우에는 AccessDeniedException을 발생시켜 AccessDeniedHandler을 호출한다.
+
+> AjaxLoginAuthenticationEntryPoint
+
+```java
+@Component
+public class AjaxLoginAuthenticationEntryPoint implements AuthenticationEntryPoint {
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+    }
+}
+```
+
+> AjaxAccessDeniedHandler
+
+```java
+@Component
+public class AjaxAccessDeniedHandler implements AccessDeniedHandler {
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access is denied");
+    }
+}
+```
+
+> Securiy Config
+
+```java
+private final AjaxLoginAuthenticationEntryPoint ajaxLoginAuthenticationEntryPoint;
+private final AjaxAccessDeniedHandler ajaxAccessDeniedHandler;
+
+public SecurityFilterChain securityFilterChain(HttpSecutiry httpSecurity){
+    httpSecurity.exceptionHandling()
+            .authenticationEntryPoint(ajaxLoginAuthenticationEntryPoint)
+            .accessDeniedHandler(ajaxAccessDeniedHandler);
+}
+```
+
+### DSL Configurer
+
+DSL을 활용해서 Config file을 클래스 하나로 일괄적으로 관리할 수 있다.
+
+> AjaxLoginConfigurer
+
+```java
+public class AjaxLoginConfigurer<H extends HttpSecurityBuilder<H>> extends AbstractAuthenticationFilterConfigurer<H,AjaxLoginConfigurer<H>, AjaxLoginProcessingFilter> {
+    private AuthenticationSuccessHandler successHandler;
+    private AuthenticationFailureHandler failureHandler;
+    private AuthenticationManager authenticationManager;
+
+    private AuthenticationDetailsSource authencationDetailsSource;
+
+    public AjaxLoginConfigurer() {
+        super(new AjaxLoginProcessingFilter(), null);
+    }
+
+    @Override
+    public void init(H http) throws Exception {
+        super.init(http);
+    }
+
+    @Override
+    public void configure(H http) {
+
+        if(authenticationManager == null){
+            authenticationManager = http.getSharedObject(AuthenticationManager.class);
+        }
+        getAuthenticationFilter().setAuthenticationManager(authenticationManager);
+        getAuthenticationFilter().setAuthenticationSuccessHandler(successHandler);
+        getAuthenticationFilter().setAuthenticationFailureHandler(failureHandler);
+        getAuthenticationFilter().setAuthenticationDetailsSource(authencationDetailsSource);
+
+        SessionAuthenticationStrategy sessionAuthenticationStrategy = http
+                .getSharedObject(SessionAuthenticationStrategy.class);
+        if (sessionAuthenticationStrategy != null) {
+            getAuthenticationFilter().setSessionAuthenticationStrategy(sessionAuthenticationStrategy);
+        }
+        RememberMeServices rememberMeServices = http
+                .getSharedObject(RememberMeServices.class);
+        if (rememberMeServices != null) {
+            getAuthenticationFilter().setRememberMeServices(rememberMeServices);
+        }
+        http.setSharedObject(AjaxLoginProcessingFilter.class,getAuthenticationFilter());
+        http.addFilterBefore(getAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+    }
+
+    public AjaxLoginConfigurer<H> successHandlerAjax(AuthenticationSuccessHandler successHandler) {
+        this.successHandler = successHandler;
+        return this;
+    }
+
+    public AjaxLoginConfigurer<H> failureHandlerAjax(AuthenticationFailureHandler authenticationFailureHandler) {
+        this.failureHandler = authenticationFailureHandler;
+        return this;
+    }
+
+    public AjaxLoginConfigurer<H> setAuthenticationManager(AuthenticationManager authenticationManager) {
+        this.authenticationManager = authenticationManager;
+        return this;
+    }
+
+    public AjaxLoginConfigurer<H> setAuthenticationDetailsSource(AuthenticationDetailsSource authenticationDetailsSource) {
+        this.authencationDetailsSource = authenticationDetailsSource;
+        return this;
+    }
+
+    @Override
+    protected RequestMatcher createLoginProcessingUrlMatcher(String loginProcessingUrl) {
+        return new AntPathRequestMatcher(loginProcessingUrl, "POST");
+    }
+}
+
+```
+
+위와 같은 configurer class을 정의하면 아래와 같이 간단하게 처리할 수 있게 된다. Security Class에 표준화된 설정을 처리할 수 있다는 것이 DSL 만의 장점이다.
+
+> Security Config
+
+```java
+private void customConfigurerAjax(HttpSecurity httpSecurity) throws Exception {
+    httpSecurity
+            .apply(new AjaxLoginConfigurer<>())
+            .successHandlerAjax(ajaxSuccessHandler)
+            .failureHandlerAjax(ajaxFailureHandler)
+            .setAuthenticationManager(ajaxAuthenticationManager(authenticationConfiguration));
+    httpSecurity.formLogin()
+            .loginPage("/api/login")
+            .loginProcessingUrl("api/login")
+            .permitAll();
+    }
+
+public SecurityFilterChain ajaxSecurityFilterChain(HttpSecurity httpSecurity) throws Exception{
+    customConfigurerAjax(httpSecurity);
+    return httpSecurity.build()
+}
+```
+
 
 
 
