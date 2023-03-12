@@ -78,58 +78,46 @@ public class CustomAuthorizationManager implements AuthorizationManager<HttpServ
         this.roleHierarchy = roleHierarchy;
     }
 
+    public void setAuthenticatedUrls(String... urls) {
+        for (String url : urls) {
+            this.defaultMappings.add(new RequestMatcherEntry<>(new AntPathRequestMatcher(url), AuthenticatedAuthorizationManager.authenticated()));
+        }
+    }
+
     @Override
     public AuthorizationDecision check(Supplier<Authentication> authentication, HttpServletRequest request) {
         if (this.logger.isTraceEnabled())
             this.logger.trace(LogMessage.format("Authorizing %s", request));
 
-        //IP 검증 수행
+        
         for (RequestMatcher ipMatcher : deniedIps) {
             if(ipMatcher.matches(request))
                 return DENY;
         }
-        //PermitAll 검증
+
         for(RequestMatcher permitMatcher: permitAlls)
             if(permitMatcher.matches(request))
                 return new AuthorizationDecision(true);
 
-        List<RequestMatcherEntry<Set<String>>> mappings mappings = securityResourceService.getResourceList();
-        //Url resource에 대한 권한 검증을 진행한다.
-        for (RequestMatcherEntry<Set<String>> mapping : this.mappings) {
+        List<RequestMatcherEntry<AuthorizationManager<RequestAuthorizationContext>>> mappings = securityResourceService.getResourceList();
+        mappings.addAll(defaultMappings);
+
+        for (RequestMatcherEntry<AuthorizationManager<RequestAuthorizationContext>> mapping : mappings) {
             RequestMatcher matcher = mapping.getRequestMatcher();
             RequestMatcher.MatchResult matchResult = matcher.matcher(request);
             if (matchResult.isMatch()) {
-                Set<String> authorities=mapping.getEntry();
+                AuthorizationManager<RequestAuthorizationContext> manager = mapping.getEntry();
                 if (this.logger.isTraceEnabled()) {
-                    this.logger.trace(LogMessage.format("Checking authorization on %s", request));
+                    this.logger.trace(LogMessage.format("Checking authorization on %s using %s", request, manager));
                 }
-                boolean granted = isGranted(authentication.get(),authorities);
-                return new AuthorizationDecision(granted);
+                return manager.check(authentication,
+                        new RequestAuthorizationContext(request, matchResult.getVariables()));
             }
         }
         if (this.logger.isTraceEnabled()) {
             this.logger.trace(LogMessage.of(() -> "Denying request since did not find matching RequestMatcher"));
         }
         return DENY;
-    }
-
-    //인증 여부와 인가 여부를 검증한다.
-    private boolean isGranted(Authentication authentication,Set<String> authorities) {
-        return authentication != null && authentication.isAuthenticated() && isAuthorized(authentication,authorities);
-    }
-
-    private boolean isAuthorized(Authentication authentication,Set<String> authorities) {
-        for (GrantedAuthority grantedAuthority : getGrantedAuthorities(authentication)) {
-            if (authorities.contains(grantedAuthority.getAuthority())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    //권한의 계층정보를 가져오기 위한 메소드
-    private Collection<? extends GrantedAuthority> getGrantedAuthorities(Authentication authentication) {
-        return this.roleHierarchy.getReachableGrantedAuthorities(authentication.getAuthorities());
     }
 }
 ```
@@ -170,7 +158,7 @@ for (RequestMatcher ipMatcher : deniedIps) {
 
 5. SecurityResourceService
 
-DB에 등록된 url resource에 대한 권한정보를 가져오는 Service 객체이다.
+DB에 등록된 url resource에 대한 권한정보를 가져오는 Service 객체이다. Resource에 등록시 권한 검증을 수행하는 AuthorityAuthorizationManager 객체를 삽입한다.
 
 > SecurityResourceService
 
@@ -181,22 +169,29 @@ DB에 등록된 url resource에 대한 권한정보를 가져오는 Service 객�
 public class SecurityResourceService {
     private final ResourcesRepository resourcesRepository;
 
-    List<RequestMatcherEntry<Set<String>>> securityResources=new ArrayList<>();
+    private final RoleHierarchyImpl roleHierarchyImpl;
 
-    //DB에서 권한 정보를 가져오는 부분을 담당한다.
+    List<RequestMatcherEntry<AuthorizationManager<RequestAuthorizationContext>>> securityResources=new ArrayList<>();
+
     public void load() {
         securityResources.clear();
 
         List<Resources> allResources = resourcesRepository.findAllResources();
-        //경로에 설정된 권한 정보에 대해서 RequestMatcherEntry 객체로 묶어서 등록한다.
+
         allResources.forEach(
                 (resource)->{
-                    securityResources.add(new RequestMatcherEntry<>(new AntPathRequestMatcher(resource.getResourceName()),resource.getRoleSet()));
+                    Set < String > authoritites = new HashSet<>();
+                    resource.getRoleSet().forEach(
+                            (role) -> {
+                                authoritites.add(role.getRoleName());
+                            });
+                    AuthorityAuthorizationManager<RequestAuthorizationContext> authorizationManager = AuthorityAuthorizationManager.hasAnyAuthority(authoritites.toArray(new String[0]));
+                    authorizationManager.setRoleHierarchy(roleHierarchyImpl);
+                    securityResources.add(new RequestMatcherEntry<>(new AntPathRequestMatcher(resource.getResourceName()),authorizationManager));
                 }
         );
     }
-
-    public List<RequestMatcherEntry<Set<String>>> getResourceList() {
+    public List<RequestMatcherEntry<AuthorizationManager<RequestAuthorizationContext>>> getResourceList() {
         return securityResources;
     }
 
@@ -282,7 +277,6 @@ public RoleHierarchyImpl roleHierarchyImpl() {
 @Bean
 public CustomAuthorizationManager customAuthorizationManager() throws Exception {
     CustomAuthorizationManager customAuthorizationManager = new CustomAuthorizationManager(securityResourceService);
-    customAuthorizationManager.setRoleHierarchy(roleHierarchyImpl());
     customAuthorizationManager.setPermitAlls(Arrays.asList(
             new AntPathRequestMatcher("/"),
             new AntPathRequestMatcher("/user"),
