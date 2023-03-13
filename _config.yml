@@ -284,6 +284,8 @@ defaults:
       related: true
       toc: true
       toc_sticky: true
+      sidebar:
+        nav: "docs"
 
   # _pages
   - scope:
@@ -297,3 +299,5 @@ defaults:
       comments: true
       share: true
       related: false
+      sidebar:
+        nav: "docs"

@@ -18,3 +18,68 @@ main:
   #   url: /collection-archive/
   # - title: "Sitemap"
   #   url: /sitemap/
+
+docs:
+  - title: "Til"
+    url: /category/til/
+  - title: "Java Spring Framework"
+    children:
+      - title: "Spring Basic"
+        url: /tags/Spring_Basic/
+      - title: "Spring Core"
+        url: /tags/Spring_Core/
+      - title: "Spring MVC"
+        url: /tags/Spring_MVC/
+      - title: "Spring DB"
+        url: /tags/Spring_DB/
+      - title: "Spring Advanced"
+        url: /tags/Spring_Advanced/
+      - title: "Spring JPA"
+        url: /tags/Spring_JPA/
+      - title: "Spring Security"
+        url: /tags/Spring_Security
+  - title: "DB"
+    children: 
+      - title: "MongoDB"
+        url: /tags/mongodb/
+      - title: "ElasticSearch"
+        url: /tags/elastic_search
+      - title: "JPA"
+        url: /tags/JPA/
+  - title: "DevOps"
+    children: 
+      - title: "Kubernetes"
+        url: /tags/kubernetes/
+  - title: "Code Test Practice"
+    children:
+      - title: "Implementation"
+        url: /tags/implementation
+      - title: "Greedy"
+        url: /tags/greedy
+      - title: "DFS/BFS"
+        url: /tags/dfsbfs
+      - title: "Graph"
+        url: /tags/graph
+      - title: "Data Structure"
+        url: /tags/datastructure
+      - title: "DP"
+        url: /tags/dp
+      - title: "ShortestPath"
+        url: /tags/shortestpath
+      - title: "Backtracking"
+        url: /tags/backtracking
+      - title: "Binary Search"
+        url: /tags/search
+      - title: "Two Pointer"
+        url: /tags/twopointer
+  - title: "Code Tests"
+    children: 
+      - title: Kakao Test
+        url: /tags/kakao
+      - title: Samsung Test
+        url: /tags/samsung
+      - title: Hyundai Test
+        url: /tags/softeer
+        
+        
+        
