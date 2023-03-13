@@ -5,7 +5,7 @@ excerpt: "Implementation"
 categories:
   - codetest
 tags:
-  - Implementation
+  - implementation
   - codetest
   - samsung
 ---
