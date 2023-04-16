@@ -105,7 +105,7 @@ public PasswordEncoder passwordEncoder() {
 
 DEFAULT으로 BcryptPasswordEncoder가 Bean으로 생성되게 된다.
 
-## UserDetailsService
+### UserDetailsService
 
 authentication 과정에서 DB에 저장된 유저 정보를 받아서 UserDetails 형태로 추출해주는 작업을 진행한다. Spring에서는 메모리에 저장하게 되지만, DB 연동을 통해 DB로부터 유저를 받아오는 작업을 진행하기 위해 사용자 정의의 UsersDetailsService를 구현한다.
 
@@ -154,7 +154,7 @@ public class AccountContext extends User {
 }
 ```
 
-## AuthenticationProvider
+### AuthenticationProvider
 
 실제 인증 처리를 수행하는 Authentication Provider를 만들어서 등록한다.
 
@@ -230,7 +230,7 @@ public AuthenticationManager authenticationManager(AuthenticationConfiguration a
 }
 ```
 
-## Login Form Page
+### Login Form Page
 
 spring security에서 기본적으로 login page를 생성해서 사용자에게 전달할 수 있지만, 직접 로그인 화면을 구현한 경우 아래와 같이 설정작업을 진행한다. default으로 설정된 아이디와 패스워드에 대한 파라미터 이름은 username, password이므로 form tag에서 해당 파라미터명을 활용해야된다.
 
@@ -265,7 +265,7 @@ httpSecurity
 </form>
 ```
 
-## Logout
+### Logout
 
 로그아웃 수행을 위해 POST, GET 방식을 활용할 수 있지만, GET 기반으로 SecurityContextLogoutHandler을 이용하여 로그아웃 로직을 구현할 수 있다.
 
@@ -301,7 +301,7 @@ private RequestMatcher createLogoutRequestMatcher(H http) {
 
 ```
 
-## 화면 보안 처리
+### 화면 보안 처리
 
 Spring Security와 Thymeleaf을 활용하여 인증여부에 따른 메뉴 처리가 가능하다. 아래와 같이 메뉴바를 구성하는 html에서, sec:authorize property를 활용해서 인증 여부에 따른 보이는 메뉴를 제한할 수 있다.
 
@@ -327,7 +327,7 @@ xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
 </html>
 ```
 
-## WebAuthenticationDetails
+### WebAuthenticationDetails
 
 ![webauthenticationdetails](/assets/images/jsf/Spring_Security/webauthenticationdetails.png)
 
@@ -374,7 +374,7 @@ public class SecurityConfig{
 }
 ```
 
-## AuthenticationSuccessHandler
+### AuthenticationSuccessHandler
 
 인증이 성공했을 때, 수행되는 핸들러를 정의하자, AuthenticationSuccessHandler을 직접 구현해도 되지만, Spring에서 기본적으로 제공하는 구현체를 활용하여 상속해서 필요한 메소드만 overriding하도록 한다. 아래의 successhandler의 경우 이전에 요청된 url이 있으면 해당 경로로 redirect해주는 작업을 수행한다.
 
@@ -418,7 +418,7 @@ public class SecurityConfig{
 }
 ```
 
-## AuthenticationFailureHandler
+### AuthenticationFailureHandler
 
 인증이 실패했을 때, 수행되는 핸들러를 정의하자. 해당 Handler에서는 전달받은 exception의 종류에 따라 에러 메세지를 구성하여 해당 에러 메세지를 포함하여 로그인 경로로 redirect을 수행한다.
 
@@ -477,7 +477,7 @@ public class SecurityConfig{
 }
 ```
 
-## AccessDeniedHandler
+### AccessDeniedHandler
 
 인가 검증이 실패하게 되면 AuthorityFilter에서는 ExceptionTranslationFilter로 AccessDeniedException을 전달하게 된다. 그러면, 해당 exception 처리를 위해 AccessDeniedHandler가 호출된다.
 
