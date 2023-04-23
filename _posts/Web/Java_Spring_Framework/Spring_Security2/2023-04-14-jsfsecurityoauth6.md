@@ -160,7 +160,7 @@ public DefaultOAuth2AuthorizedClientManager oAuth2AuthorizedClientManager(Client
 }
 ```
 
-## OAuth2 Client을 활요하여 로그인 처리
+## OAuth2 Client을 활용하여 로그인 처리
 
 1. /oauth2Login으로 요청을 보내 권한 부여 흐름을 요청한다.
 
@@ -407,7 +407,7 @@ public String oauth2Login(Model model, HttpServletRequest request, HttpServletRe
 }
 ```
 
-하지만, 이 과정은 Servlet 내부로 들어와 Controller의 실행을 처리하게 되는데, 이를 Filer로 구성하여 Filter level에서 인증을 처리할 수 있도록 한다.
+하지만, 이 과정은 Servlet 내부로 들어와 Controller의 실행을 처리하게 되는데, 이를 Filter로 구성하여 Filter level에서 인증을 처리할 수 있도록 한다.
 
 > CustomOAuth2LoginAuthenticationFilter
 
