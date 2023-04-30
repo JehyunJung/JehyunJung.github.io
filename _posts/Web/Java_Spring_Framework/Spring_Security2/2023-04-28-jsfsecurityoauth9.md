@@ -444,6 +444,404 @@ public class JwtDecoderConfig {
 httpSecurity.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
 ```
 
+### RSA
+
+RSA 암호화 방식을 활용하여 JWT token을 처리하는 과정도 MAC 방식과 유사하게 동작한다.
+
+#### Token Creation
+
+JwtAuthenticationFilter을 생성하는 과정에서 RSASecuritySigner 객체를 전달하여, RSA 기반의 JWT token이 생성될 수 있도록 한다.
+
+> RSASecuritySigner
+
+```java
+public class RSASecuritySigner extends SecuritySigner{
+    @Override
+    public String getToken(UserDetails user, JWK jwk) throws JOSEException {
+        RSASSASigner jwsSigner = new RSASSASigner(((RSAKey)jwk).toRSAPrivateKey());
+        return super.getJwtTokenInternal(jwsSigner, user,jwk);
+    }
+}
+```
+
+> RSA key
+
+```java
+//RSA 방식의 서명
+@Bean
+public RSASecuritySigner rsaSecuritySigner(){
+    return new RSASecuritySigner();
+};
+@Bean
+public RSAKey rsaKey() throws JOSEException {
+    RSAKey rsaKey = new RSAKeyGenerator(2048)
+            .keyID("rsaKey")
+            .algorithm(JWSAlgorithm.RS256)
+            .generate();
+    return rsaKey;
+}
+```
+
+> Security Config
+
+```java
+@Bean
+public JwtAuthenticationFilter jwtAuthenticationFilter(RSASecuritySigner securitySigner, RSAKey jwk) throws Exception {
+    JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(securitySigner,jwk);
+    jwtAuthenticationFilter.setAuthenticationManager(authenticationManager(null));
+    return jwtAuthenticationFilter;
+}
+@Bean
+public JwtAuthorizationRSAFilter jwtAuthorizationRsaFilter(RSAKey rsaKey) throws JOSEException {
+    return new JwtAuthorizationRSAFilter(new RSASSAVerifier(rsaKey.toRSAPublicKey()));
+}
+
+httpSecurity.addFilterBefore(jwtAuthenticationFilter(null,null), UsernamePasswordAuthenticationFilter.class);
+```
+
+#### Token Verification
+
+Token Verfication의 경우 JwtAuthorizationRSAFilter을 활용하여 RSAVerfier을 통해 Token에 대한 검증을 수행한다. AuthorizationFilter에서 수행하는 기능은 Verfier 객체에 의해서 처리되기 때문에 해당 암호화 방식에 맞는 JWSVerifier만 전달하면 해당 암호화 방식에 맞는 토큰 검증이 이루어진다. 따라서 아래와 같이 JWSVerifier을 상위 클래스에 전달하기만 하면 된다.
+
+> JwtAuthorizationRSAFilter
+
+```java
+public class JwtAuthorizationRSAFilter extends JwtAuthorizationFilter {
+
+    public JwtAuthorizationRSAFilter(JWSVerifier jwsVerfier) {
+        super(jwsVerfier);
+    }
+}
+```
+
+RSA 방식도 마찬가지로 JwtDecoder을 이용한 자동 검증을 활용할 수 있다.
+
+> JwtDecoderConfig
+
+```java
+ @Bean
+@ConditionalOnProperty(prefix = "spring.security.oauth2.resourceserver.jwt", name = "jws-algorithms", havingValue = "RS512", matchIfMissing = false)
+public JwtDecoder jwtDecoderByPublicKeyValue(RSAKey rsaKey, OAuth2ResourceServerProperties properties) throws JOSEException {
+    return NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey())
+            .signatureAlgorithm(SignatureAlgorithm.from(properties.getJwt().getJwsAlgorithms().get(0)))
+            .build();
+}
+```
+
+### RSA - public key
+
+위의 경우 Spring에서 제공하는 RSAKeyGenerator을 활용해서 RSA key을 만들어 이를 기반으로 Jwt token을 처리하였다. 하지만, 직접 private key, public key을 생성해서 암호화를 수행하는 방법도 가능하다.
+
+java에서 제공하는 keytool 유틸리티를 이용해서 KeyStore 객체를 생성성해서 이를 통해 private key, public key, certificate 객체를 생성할 수 있다.
+
+```ps
+//Private key 생성
+keytool -genkeypair -alias apiKey -keyalg RSA -keypass "pass1234" -keystore apiKey.jks -storepass "pass1234"
+
+//Certificate 생성
+keytool -export -alias apiKey -keystore apiKey.jks -rfc -file trustServer.cer
+
+//Public key 생성
+keytool -import -alias trustServer -file trustServer.cer -keystore publicKey.jks
+```
+
+위와 같이 private key, public key, certificate을 명령어를 통해 생성하는 것이 가능하지만, Java 의 KeyStore 객체를 활용하여 key를 얻는 것이 가능하다.*(이때는 초기에 private key만 생성하면 된다.)*
+
+> KeyStore 생성
+
+private key가 포함된 apiKey.jks 파일을 읽어서 KeyStore 객체를 생성한다.
+
+```java
+String path = "E:\\Codes\\Spring-Security3\\oauth2resourceserver\\src\\main\\resources\\certs\\";
+File file = new File(path + "publicKey.txt");
+
+FileInputStream is = new FileInputStream(path + "apiKey.jks");
+KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+keystore.load(is, "pass1234".toCharArray());
+```
+
+> private key, certificate, public key
+
+```java
+Certificate certificate = keystore.getCertificate(alias);
+PublicKey publicKey = certificate.getPublicKey();
+KeyPair keyPair = new KeyPair(publicKey, (PrivateKey) key);
+```
+
+> public key을 파일에 저장
+
+```java
+String publicStr = java.util.Base64.getMimeEncoder().encodeToString(publicKey.getEncoded());
+publicStr = "-----BEGIN PUBLIC KEY-----\r\n" + publicStr + "\r\n-----END PUBLIC KEY-----";
+
+OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), Charset.defaultCharset());
+writer.write(publicStr);
+writer.close();
+```
+
+> OAuth2ResourceServerJwtConfiguration
+
+위 처럼, public key을 텍스트 파일에 저장하게 되면, Spring Security가 동작하는 과정에서 JwtDecoder 생성할 때, public key을 활용한 JwtDecoder을 생성하게 된다.
+
+```java
+@Bean
+@Conditional(KeyValueCondition.class)
+JwtDecoder jwtDecoderByPublicKeyValue() throws Exception {
+    RSAPublicKey publicKey = (RSAPublicKey) KeyFactory.getInstance("RSA")
+        .generatePublic(new X509EncodedKeySpec(getKeySpec(this.properties.readPublicKey())));
+    NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(publicKey)
+        .signatureAlgorithm(SignatureAlgorithm.from(exactlyOneAlgorithm()))
+        .build();
+    jwtDecoder.setJwtValidator(getValidators(JwtValidators::createDefault));
+    return jwtDecoder;
+}
+
+public class KeyValueCondition extends SpringBootCondition {
+	@Override
+	public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
+		ConditionMessage.Builder message = ConditionMessage.forCondition("Public Key Value Condition");
+		Environment environment = context.getEnvironment();
+		String publicKeyLocation = environment
+			.getProperty("spring.security.oauth2.resourceserver.jwt.public-key-location");
+		if (!StringUtils.hasText(publicKeyLocation)) {
+			return ConditionOutcome.noMatch(message.didNotFind("public-key-location property").atAll());
+		}
+		String issuerUri = environment.getProperty("spring.security.oauth2.resourceserver.jwt.issuer-uri");
+		String jwkSetUri = environment.getProperty("spring.security.oauth2.resourceserver.jwt.jwk-set-uri");
+		if (StringUtils.hasText(jwkSetUri)) {
+			return ConditionOutcome.noMatch(message.found("jwk-set-uri property").items(jwkSetUri));
+		}
+		if (StringUtils.hasText(issuerUri)) {
+			return ConditionOutcome.noMatch(message.found("issuer-uri property").items(issuerUri));
+		}
+		return ConditionOutcome.match(message.foundExactly("public key location property"));
+	}
+
+}
+```
+
+> application.yml
+
+public-key-location값을 설정하게 되면 위의 방식을 통해 JwtDecoder가 생성되게 된다.
+
+```yaml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: classpath:certs/publicKey.txt
+
+```
+
+위의 모든 과정을 어플리케이션이 시작되면 동작하게끔 ApplicationRunner을 구현하는 클래스를 정의한다.
+
+> RsaKeyExtractor
+
+```java
+@Component
+public class RsaKeyExtractor implements ApplicationRunner {
+
+    @Autowired
+    private RSAPublicKeySecuritySigner rsaPublicKeySecuritySigner;
+
+    @Override
+    public void run(ApplicationArguments args) throws Exception {
+
+        String path = "E:\\Codes\\Spring-Security3\\oauth2resourceserver\\src\\main\\resources\\certs\\";
+        File file = new File(path + "publicKey.txt");
+
+        FileInputStream is = new FileInputStream(path + "apiKey.jks");
+        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keystore.load(is, "pass1234".toCharArray());
+        String alias = "apiKey";
+        Key key = keystore.getKey(alias, "pass1234".toCharArray());
+
+        if (key instanceof PrivateKey) {
+
+            Certificate certificate = keystore.getCertificate(alias);
+            PublicKey publicKey = certificate.getPublicKey();
+            KeyPair keyPair = new KeyPair(publicKey, (PrivateKey) key);
+            rsaPublicKeySecuritySigner.setPrivateKey(keyPair.getPrivate());
+
+            if (!file.exists()) {
+                String publicStr = java.util.Base64.getMimeEncoder().encodeToString(publicKey.getEncoded());
+                publicStr = "-----BEGIN PUBLIC KEY-----\r\n" + publicStr + "\r\n-----END PUBLIC KEY-----";
+
+                OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), Charset.defaultCharset());
+                writer.write(publicStr);
+                writer.close();
+            }
+        }
+        is.close();
+    }
+}
+```
+
+Public Key을 활용하는 경우, JwtDecoder가 생성되기 때문에, JwtDecoder에 의해 토큰이 검증 될 수 있도록 아래와 같이 JwtDecoder 객체를 활용하는 AuthorizationFilter을 정의한다.
+
+```java
+public class JwtAuthorizationRSAPublicKeyFilter extends JwtAuthorizationFilter {
+
+    @Autowired
+    private JwtDecoder jwtDecoder;
+
+    public JwtAuthorizationRSAPublicKeyFilter(JwtDecoder jwtDecoder) {
+        super(null);
+        this.jwtDecoder = jwtDecoder;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String header = request.getHeader("Authorization");
+
+        //토큰의 유효성 검사
+        if(tokenResolve(request))
+            filterChain.doFilter(request,response);
+        String token = getToken(request);
+        //jwtDecoder을 통한 검증
+        if(jwtDecoder != null){
+            Jwt jwt = jwtDecoder.decode(token);
+            String username = jwt.getClaimAsString("username");
+            List<String> authorities = jwt.getClaimAsStringList("authorities");
+
+            if (username != null) {
+                UserDetails user = User.withUsername(username)
+                        .password(UUID.randomUUID().toString())
+                        .authorities(authorities.get(0))
+                        .build();
+                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+            }
+        }
+        filterChain.doFilter(request,response);
+    }
+}
+```
+
+## BearerTokenAuthenticationFilter
+
+위에서는 Jwt token을 생성, 검증하는 과정을 직접 구현하였지만, OAuth2ResourceServer Module을 활용하면 BearerTokenAuthenticationFilter에 의해서 자동으로 token 관련 작업들이 처리된다.
+
+![bearertokenauthenticationfilter](/assets/images/jsf/Spring_Security/oauth2/bearertokenauthenticationfilter.png)
+
+1. BearerTokenResolver에 의한 Authorization Header, Token 형식이 맞는지 확인
+
+```java
+//BearerTokenAuthenticationFilter
+@Override
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+        throws ServletException, IOException {
+    String token;
+    try {
+        token = this.bearerTokenResolver.resolve(request);
+    }
+    catch (OAuth2AuthenticationException invalid) {
+        this.logger.trace("Sending to authentication entry point since failed to resolve bearer token", invalid);
+        this.authenticationEntryPoint.commence(request, response, invalid);
+        return;
+    }
+    if (token == null) {
+        this.logger.trace("Did not process request since did not find bearer token");
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+//DefaultBearerTokenResolver에
+@Override
+public String resolve(final HttpServletRequest request) {
+    final String authorizationHeaderToken = resolveFromAuthorizationHeader(request);
+    final String parameterToken = isParameterTokenSupportedForRequest(request)
+            ? resolveFromRequestParameters(request) : null;
+    if (authorizationHeaderToken != null) {
+        if (parameterToken != null) {
+            final BearerTokenError error = BearerTokenErrors
+                    .invalidRequest("Found multiple bearer tokens in the request");
+            throw new OAuth2AuthenticationException(error);
+        }
+        return authorizationHeaderToken;
+    }
+    if (parameterToken != null && isParameterTokenEnabledForRequest(request)) {
+        return parameterToken;
+    }
+    return null;
+}
+```
+
+2. BearerTokenAuthenticationToken 객체를 생성하여 ProviderManager에 전달
+
+```java
+BearerTokenAuthenticationToken authenticationRequest = new BearerTokenAuthenticationToken(token);
+authenticationRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
+
+try {
+    AuthenticationManager authenticationManager = this.authenticationManagerResolver.resolve(request);
+    Authentication authenticationResult = authenticationManager.authenticate(authenticationRequest);
+```
+
+3. JwtAuthenticationProvider에 의해 Token 인증 수행
+JwtDecoder의 decoder 과정은 위에서 다룬 Jwt Token에 대한 검증이 이루어지는 구간이다. 인증이 완료된 이후에는 JwtAuthenticationToken 형태로 반환한다.
+
+```java
+//JwtAuthenticationProvider
+@Override
+public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    BearerTokenAuthenticationToken bearer = (BearerTokenAuthenticationToken) authentication;
+    Jwt jwt = getJwt(bearer);
+    AbstractAuthenticationToken token = this.jwtAuthenticationConverter.convert(jwt);
+    token.setDetails(bearer.getDetails());
+    this.logger.debug("Authenticated token");
+    return token;
+}
+private Jwt getJwt(BearerTokenAuthenticationToken bearer) {
+    try {
+        return this.jwtDecoder.decode(bearer.getToken());
+    }
+    catch (BadJwtException failed) {
+        this.logger.debug("Failed to authenticate since the JWT was invalid");
+        throw new InvalidBearerTokenException(failed.getMessage(), failed);
+    }
+    catch (JwtException failed) {
+        throw new AuthenticationServiceException(failed.getMessage(), failed);
+    }
+}
+```
+
+> JwtAuthenticationToken
+
+인증된 객체에 대한 principal, token 정보가 저장되어 있는 Authentication 객체이며, 이는 Security Context에 저장되어 어플리케이션 전반에서 참조될 수 있도록 한다.
+
+```java
+public abstract class AbstractOAuth2TokenAuthenticationToken<T extends OAuth2Token>
+		extends AbstractAuthenticationToken {
+
+	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+
+	private Object principal;
+
+	private Object credentials;
+
+	private T token;
+
+@Transient
+public class JwtAuthenticationToken extends AbstractOAuth2TokenAuthenticationToken<Jwt> {
+
+	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+
+	private final String name;
+
+```
+4. 인증이 완료된 토큰에 대해 SecurityContext에 저장하는 작업 수행
+
+```java
+SecurityContext context = this.securityContextHolderStrategy.createEmptyContext();
+context.setAuthentication(authenticationResult);
+this.securityContextHolderStrategy.setContext(context);
+this.securityContextRepository.saveContext(context, request, response);
+```
+
+
 ## References
 link: [inflearn](https://www.inflearn.com/course/%EC%A0%95%EC%88%98%EC%9B%90-%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0/dashboard)
 
