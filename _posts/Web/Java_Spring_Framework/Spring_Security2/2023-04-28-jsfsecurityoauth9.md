@@ -841,6 +841,114 @@ this.securityContextHolderStrategy.setContext(context);
 this.securityContextRepository.saveContext(context, request, response);
 ```
 
+## SCOPE 기반의 권한 설정
+
+JWT Token을 확인해보면 내부에 SCOPE가 포함되어 있는데, 이는 접근하고자하는 자원의 범위를 나타낸다. 이 SCOPE을 이용하여 Resource Server에서는 자원에 대한 접근 권한을 확인한다.
+
+BearerTokenAuthenticationFilter을 통해 토큰에 대한 인증을 수행하게 되면 아래와 같이 Authentication이 생성된다.
+
+![jwt_authentication_result](/assets/images/jsf/Spring_Security/oauth2/jwt_authentication_result.png)
+
+photos 경로 접근에 있어, SCOPE_photo 권한을 설정해놓게 되면 위의 토큰을 가진 상태에서는 접근하는 것이 가능하다.
+
+```java
+@Bean
+public SecurityFilterChain config(HttpSecurity httpSecurity) throws Exception {
+    httpSecurity
+            .authorizeHttpRequests()
+            .requestMatchers("/photos/1").hasAuthority("SCOPE_photo")
+            .anyRequest().authenticated();
+}
+```
+
+Spring 내부에서, SCOPE에 대하여 SCOPE_을 추가하여 권한을 설정하게 된다.
+
+```java
+public final class JwtGrantedAuthoritiesConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
+
+	private final Log logger = LogFactory.getLog(getClass());
+
+	private static final String DEFAULT_AUTHORITY_PREFIX = "SCOPE_";
+
+	private static final Collection<String> WELL_KNOWN_AUTHORITIES_CLAIM_NAMES = Arrays.asList("scope", "scp");
+
+	private String authorityPrefix = DEFAULT_AUTHORITY_PREFIX;
+
+	private String authoritiesClaimName;
+
+	/**
+	 * Extract {@link GrantedAuthority}s from the given {@link Jwt}.
+	 * @param jwt The {@link Jwt} token
+	 * @return The {@link GrantedAuthority authorities} read from the token scopes
+	 */
+	@Override
+	public Collection<GrantedAuthority> convert(Jwt jwt) {
+		Collection<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+		for (String authority : getAuthorities(jwt)) {
+			grantedAuthorities.add(new SimpleGrantedAuthority(this.authorityPrefix + authority));
+		}
+		return grantedAuthorities;
+	}
+```
+
+하지만, 커스텀하게 정의한 converter을 통해 원하는 방식으로 권한을 매핑하는 것이 가능하다.
+
+> CustomRoleConverter
+
+```java
+public class CustomRoleConverter implements Converter<Jwt, Collection<GrantedAuthority>> {
+    private String PREFIX = "ROLE_";
+    @Override
+    public Collection<GrantedAuthority> convert(Jwt jwt) {
+        String scopes = jwt.getClaimAsString("scope");
+        Map<String, Object> realm_access = jwt.getClaimAsMap("realm_access");
+
+        if(scopes == null || realm_access == null)
+            return Collections.EMPTY_LIST;
+        //SCOPE을 활용한 권한 매핑
+        List<GrantedAuthority> authorities1 = Arrays.stream(scopes.split(" "))
+                .map(authority -> PREFIX + authority)
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+        //ROLE을 활용한 권한 매핑
+        List<GrantedAuthority> authorities2 = ((List<String>) realm_access.get("roles"))
+                .stream()
+                .map(role -> PREFIX + role)
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
+        authorities1.addAll(authorities2);
+        return authorities1;
+
+
+    }
+}
+```
+> Security Config
+
+```java
+public class SecurityConfig {
+    @Bean
+    public SecurityFilterChain config(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .authorizeHttpRequests()
+                .requestMatchers("/photos/1").hasAuthority("ROLE_photo")
+                .requestMatchers("/photos/3").hasAuthority("ROLE_default-roles-oauth2")
+                .anyRequest().authenticated();
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new CustomRoleConverter());
+
+        httpSecurity.oauth2ResourceServer().jwt().jwtAuthenticationConverter(jwtAuthenticationConverter);
+        return httpSecurity.build();
+    }
+}
+```
+위의 Custom Converter을 통해 직접 정의한 PREFIX가 추가되는 것을 확인할 수 있고, ROLE에 대한 권한도 설정되는 것을 확인할 수 있다.
+
+![jwt_authentication_result2](/assets/images/jsf/Spring_Security/oauth2/jwt_authentication_result2.png) 
+
+
 
 ## References
 link: [inflearn](https://www.inflearn.com/course/%EC%A0%95%EC%88%98%EC%9B%90-%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0/dashboard)
