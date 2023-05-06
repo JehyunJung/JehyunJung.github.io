@@ -210,7 +210,10 @@ private KeyPair generateRSAKey() throws NoSuchAlgorithmException {
 }
 ```
 
-## OAuth2AuthorizationServerConfigurer
+## Domain Classes
+
+
+### OAuth2AuthorizationServerConfigurer
 
 Authorization Server 관련 설정을 처리하는 configurer으로 아래의 5가지 Configurer을 포함한다.
 
@@ -243,7 +246,7 @@ private Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer>
 
 ![oauth2_authorizationserver_configurers2](/assets/images/jsf/Spring_Security/oauth2/oauth2_authorizationserver_configurers2.png)
 
-## AuthorizationServerContext
+### AuthorizationServerContext
 
 Provider 설정에 대한 정보를 저장하고 있는 객체로, Spring Authorization Server을 구동하기 위한 각종 정보를 포함한다.
 
@@ -326,6 +329,277 @@ protected void doFilterInternal(HttpServletRequest request, HttpServletResponse 
 }
 ```
 
+### RegisteredClient
+
+> RegisteredClient
+
+RegisteredClient 클래스는 인가 서버에 등록된 클라이언트에 대한 메타정보를 포함하는 클래스이다. 아래와 같이 clientId, clientSecret, authorizationGrantType 등 client에 관한 다양한 정보를 포함하고 있다.
+
+```java
+public class RegisteredClient implements Serializable {
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	private String id;
+	private String clientId;
+	private Instant clientIdIssuedAt;
+	private String clientSecret;
+	private Instant clientSecretExpiresAt;
+	private String clientName;
+	private Set<ClientAuthenticationMethod> clientAuthenticationMethods;
+	private Set<AuthorizationGrantType> authorizationGrantTypes;
+	private Set<String> redirectUris;
+	private Set<String> scopes;
+	private ClientSettings clientSettings;
+	private TokenSettings tokenSettings;
+}
+```
+
+> RegisteredClientRepository
+
+Authorization Server에는 여러 client들이 등록되는데, InMemory 방식 혹은 JDBC 방식을 활용하여 registeredclient을 저장할 수 있다. 
+
+```java
+//InMemoryRegisteredClientRepository
+public final class InMemoryRegisteredClientRepository implements RegisteredClientRepository {
+	private final Map<String, RegisteredClient> idRegistrationMap;
+	private final Map<String, RegisteredClient> clientIdRegistrationMap;
+    ...
+}
+
+//JdbcRegisteredClientRepository
+public class JdbcRegisteredClientRepository implements RegisteredClientRepository {
+
+	// @formatter:off
+	private static final String COLUMN_NAMES = "id, "
+			+ "client_id, "
+			+ "client_id_issued_at, "
+			+ "client_secret, "
+			+ "client_secret_expires_at, "
+			+ "client_name, "
+			+ "client_authentication_methods, "
+			+ "authorization_grant_types, "
+			+ "redirect_uris, "
+			+ "scopes, "
+			+ "client_settings,"
+			+ "token_settings";
+	// @formatter:on
+
+	private static final String TABLE_NAME = "oauth2_registered_client";
+
+	private static final String PK_FILTER = "id = ?";
+
+	private static final String LOAD_REGISTERED_CLIENT_SQL = "SELECT " + COLUMN_NAMES + " FROM " + TABLE_NAME + " WHERE ";
+
+	// @formatter:off
+	private static final String INSERT_REGISTERED_CLIENT_SQL = "INSERT INTO " + TABLE_NAME
+			+ "(" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	// @formatter:on
+
+	// @formatter:off
+	private static final String UPDATE_REGISTERED_CLIENT_SQL = "UPDATE " + TABLE_NAME
+			+ " SET client_name = ?, client_authentication_methods = ?, authorization_grant_types = ?,"
+			+ " redirect_uris = ?, scopes = ?, client_settings = ?, token_settings = ?"
+			+ " WHERE " + PK_FILTER;
+	// @formatter:on
+
+	private static final String COUNT_REGISTERED_CLIENT_SQL = "SELECT COUNT(*) FROM " + TABLE_NAME + " WHERE ";
+
+	private final JdbcOperations jdbcOperations;
+	private RowMapper<RegisteredClient> registeredClientRowMapper;
+	private Function<RegisteredClient, List<SqlParameterValue>> registeredClientParametersMapper;
+    ...
+}
+
+```
+
+위의 RegisteredClient을 조회해보면 아래와 같이 client의 정보를 포함하고 있는 것을 확인할 수 있다.
+
+```json
+{
+    "id": "778a4813-078a-4091-ac33-408a8dad3316",
+    "clientId": "oauth2-client-app1",
+    "clientIdIssuedAt": null,
+    "clientSecret": "{noop}secret1",
+    "clientSecretExpiresAt": "+1000000000-12-31T23:59:59.999999999Z",
+    "clientName": "oauth2-client-app1",
+    "clientAuthenticationMethods": [
+        {
+            "value": "none"
+        },
+        {
+            "value": "client_secret_basic"
+        }
+    ],
+    "authorizationGrantTypes": [
+        {
+            "value": "refresh_token"
+        },
+        {
+            "value": "client_credentials"
+        },
+        {
+            "value": "authorization_code"
+        }
+    ],
+    "redirectUris": [
+        "http://127.0.0.1:8081"
+    ],
+    "scopes": [
+        "read",
+        "openid",
+        "profile",
+        "write",
+        "email"
+    ],
+    "clientSettings": {
+        "settings": {
+            "settings.client.require-proof-key": false,
+            "settings.client.require-authorization-consent": true
+        },
+        "tokenEndpointAuthenticationSigningAlgorithm": null,
+        "jwkSetUrl": null,
+        "requireProofKey": false,
+        "requireAuthorizationConsent": true
+    },
+    "tokenSettings": {
+        "settings": {
+            "settings.token.reuse-refresh-tokens": true,
+            "settings.token.id-token-signature-algorithm": "RS256",
+            "settings.token.access-token-time-to-live": "PT5M",
+            "settings.token.access-token-format": {
+                "value": "self-contained"
+            },
+            "settings.token.refresh-token-time-to-live": "PT1H",
+            "settings.token.authorization-code-time-to-live": "PT5M"
+        },
+        "idTokenSignatureAlgorithm": "RS256",
+        "authorizationCodeTimeToLive": "PT5M",
+        "accessTokenFormat": {
+            "value": "self-contained"
+        },
+        "accessTokenTimeToLive": "PT5M",
+        "refreshTokenTimeToLive": "PT1H",
+        "reuseRefreshTokens": true
+    }
+}
+```
+
+### OAuth2Authorization
+
+OAuth2Authorization은 OAuth2AuthorizedClient 처럼 해당 사용자에 대한 access token, refresh token과 같이 인가 상태를 유지하기 위한 객체이다. 
+
+```java
+public class OAuth2Authorization implements Serializable {
+	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+	private String id;
+	private String registeredClientId;
+	private String principalName;
+	private AuthorizationGrantType authorizationGrantType;
+	private Set<String> authorizedScopes;
+	private Map<Class<? extends OAuth2Token>, Token<?>> tokens;
+	private Map<String, Object> attributes;
+}
+```
+
+권한 부여 방식, scope에 따라 저장되는 정보가 상이하다.
+
+1. Authorization Code 방식의 경우, Authorization Code, Access Token, Refresh Token이 저장된다.
+2. Client Credentials의 경우 Access Token
+3. OIDC 방식의 경우 Authorization Code, Access Token, Refresh Token, ID Token이 저장된다.
+
+이러한 OAuth2Authorization은 OAuth2AuthorizationService에 의해 관리되는데, In-Memory, JDBC type이 존재하는데, 무수히 많은 사용자가 발생할 수 있기 때문에, In-Memory 방식은 개발환경에서는 활용하는 것이 좋다.
+
+> OAuth2AuthorizationService
+
+```java
+//InMemoryOAuth2AuthorizationService
+public final class InMemoryOAuth2AuthorizationService implements OAuth2AuthorizationService {
+	private int maxInitializedAuthorizations = 100;
+	private Map<String, OAuth2Authorization> initializedAuthorizations =
+			Collections.synchronizedMap(new MaxSizeHashMap<>(this.maxInitializedAuthorizations));
+
+	private final Map<String, OAuth2Authorization> authorizations = new ConcurrentHashMap<>();
+    ...
+}
+
+
+//JdbcOAuth2AuthorizationService
+public class JdbcOAuth2AuthorizationService implements OAuth2AuthorizationService {
+
+	// @formatter:off
+	private static final String COLUMN_NAMES = "id, "
+			+ "registered_client_id, "
+			+ "principal_name, "
+			+ "authorization_grant_type, "
+			+ "authorized_scopes, "
+			+ "attributes, "
+			+ "state, "
+			+ "authorization_code_value, "
+			+ "authorization_code_issued_at, "
+			+ "authorization_code_expires_at,"
+			+ "authorization_code_metadata,"
+			+ "access_token_value,"
+			+ "access_token_issued_at,"
+			+ "access_token_expires_at,"
+			+ "access_token_metadata,"
+			+ "access_token_type,"
+			+ "access_token_scopes,"
+			+ "oidc_id_token_value,"
+			+ "oidc_id_token_issued_at,"
+			+ "oidc_id_token_expires_at,"
+			+ "oidc_id_token_metadata,"
+			+ "refresh_token_value,"
+			+ "refresh_token_issued_at,"
+			+ "refresh_token_expires_at,"
+			+ "refresh_token_metadata";
+	// @formatter:on
+
+	private static final String TABLE_NAME = "oauth2_authorization";
+
+	private static final String PK_FILTER = "id = ?";
+	private static final String UNKNOWN_TOKEN_TYPE_FILTER = "state = ? OR authorization_code_value = ? OR " +
+			"access_token_value = ? OR refresh_token_value = ?";
+
+	private static final String STATE_FILTER = "state = ?";
+	private static final String AUTHORIZATION_CODE_FILTER = "authorization_code_value = ?";
+	private static final String ACCESS_TOKEN_FILTER = "access_token_value = ?";
+	private static final String REFRESH_TOKEN_FILTER = "refresh_token_value = ?";
+
+	// @formatter:off
+	private static final String LOAD_AUTHORIZATION_SQL = "SELECT " + COLUMN_NAMES
+			+ " FROM " + TABLE_NAME
+			+ " WHERE ";
+	// @formatter:on
+
+	// @formatter:off
+	private static final String SAVE_AUTHORIZATION_SQL = "INSERT INTO " + TABLE_NAME
+			+ " (" + COLUMN_NAMES + ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+	// @formatter:on
+
+	// @formatter:off
+	private static final String UPDATE_AUTHORIZATION_SQL = "UPDATE " + TABLE_NAME
+			+ " SET registered_client_id = ?, principal_name = ?, authorization_grant_type = ?, authorized_scopes = ?, attributes = ?, state = ?,"
+			+ " authorization_code_value = ?, authorization_code_issued_at = ?, authorization_code_expires_at = ?, authorization_code_metadata = ?,"
+			+ " access_token_value = ?, access_token_issued_at = ?, access_token_expires_at = ?, access_token_metadata = ?, access_token_type = ?, access_token_scopes = ?,"
+			+ " oidc_id_token_value = ?, oidc_id_token_issued_at = ?, oidc_id_token_expires_at = ?, oidc_id_token_metadata = ?,"
+			+ " refresh_token_value = ?, refresh_token_issued_at = ?, refresh_token_expires_at = ?, refresh_token_metadata = ?"
+			+ " WHERE " + PK_FILTER;
+	// @formatter:on
+
+	private static final String REMOVE_AUTHORIZATION_SQL = "DELETE FROM " + TABLE_NAME + " WHERE " + PK_FILTER;
+
+	private static Map<String, ColumnMetadata> columnMetadataMap;
+
+	private final JdbcOperations jdbcOperations;
+	private final LobHandler lobHandler;
+	private RowMapper<OAuth2Authorization> authorizationRowMapper;
+	private Function<OAuth2Authorization, List<SqlParameterValue>> authorizationParametersMapper;
+    ...
+}
+```
+
+OIDC + Authorization Code 방식을 통한 인증 과정의 경우 아래와 같이 저장되는 것을 확인할 수 있다.
+
+![oauth2_authorization](/assets/images/jsf/Spring_Security/oauth2/oauth2authorization.png)
 
 ## References
 link: [inflearn](https://www.inflearn.com/course/%EC%A0%95%EC%88%98%EC%9B%90-%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0/dashboard)
