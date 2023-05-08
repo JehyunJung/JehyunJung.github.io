@@ -14,7 +14,7 @@ tags:
 
 프로그래밍은 아래와 같은 방식으로 분류된다.
 
-![programming_paradigm](/assets/images/cs/programming_paradigm.jpg)
+![programming_paradigm](../../../assets/images/cs/programming_paradigm.jpg)
 
 ## 선언형과 함수형
 

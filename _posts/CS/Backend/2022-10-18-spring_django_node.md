@@ -19,7 +19,7 @@ tags:
 
 Java 기반의 웹 프레임워크로써 IoC/DI을 적용해서 객체에 관한 의존성 처리를 수행하고 확장성 있는 개발이 가능하고 Container을 이용해서 Spring Bean을 관리한다. 또한 AOP 프로그래밍을 통해 하나의 공통 관심사를 한곳에서 관리할 수 있다. 기본적으로 Spring은 아래의 Spring MVC패턴 방식으로 구현되며 디스패처 서블릿을 통한 프론트 컨트롤러가 동작하게 된다.
 
-![dispatcher_sevlet](/assets/images/jsf/front_controller_v5.png)
+![dispatcher_sevlet](../../../assets/images/jsf/front_controller_v5.png)
 
 ### Pros
 - 이미 많은 기업에서 Spring을 활용해서 서버를 구성했기 때문에 그에 따른 자료가 매우 많다.
@@ -36,7 +36,7 @@ Java 기반의 웹 프레임워크로써 IoC/DI을 적용해서 객체에 관한
 
 python 기반의 오픈 소스 웹 프레임워크로 ORM, MTV 패턴의 특징을 가진다. 기존의 웹 프레임워크와는 달리 Django는 특이하게 MTV패턴을 가지는데, 실질적으로 하는 역할 MVC와 같다.
 
-![mtv](/assets/images/projects/mtv.png)
+![mtv](../../../assets/images/projects/mtv.png)
 
 DB의 entity에 대응되는 개념으로 Model 기반으로 통신이 이루어진다.
 
@@ -62,7 +62,7 @@ View는 주어진 클라이언트의 요청을 로직에 따라 처리해서 템
 
 자바스크립트를 이용해서 Single Thread 기반의 Event Loop을 통해 사용자의 요청을 처리하고 File, Network에 대해서는 비동기 IO 방식으로 처리한다. Node.js는 여러 작업을 동시에 처리하기 위해 event loop을 활용한다. 
 
-![node_js_structure](/assets/images/projects/node_js_structure.jpg)
+![node_js_structure](../../../assets/images/projects/node_js_structure.jpg)
 
 사실 단일 스레드라고 하는 개념은 단일 호출 스택을 사용한다는 관점에서 맞는 소리 인것이다. 비동기 방식의 설계를 통해 I/O 처리를 요하는 경우 워커 쓰레드에 할당해서 비동기적으로 처리한 다음, 
 

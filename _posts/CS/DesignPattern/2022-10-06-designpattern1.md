@@ -101,7 +101,7 @@ DI 의존성 주입(Dependency Injection): 구현객체를 클라이언트에게
 
 의존관계에는 크게 정적의존,동적의존이 있는데,
 
-![class_diagram](/assets/images/jsf/order_domain2.png)
+![class_diagram](../../../assets/images/jsf/order_domain2.png)
 
 정적의존은 위 그림에서 클래스 다이어그램에 표현된 의존 관계를 뜻한다. 어플리케이션을 실행하지 않더라도 알 수 있는 의존관계이다. OrderService는 MemberRepository, DiscountPolicy와 의존관계다라는 것을 파악할 수 있다.
 
@@ -190,7 +190,7 @@ public class HelloWorld{
 
 객체가 수행하는 동작을 바꿔주기 위해 직접 코드를 수정하기 않고, 기본적인 골격인 context에서 strategy만 바꿔주는 패턴이다. 
 
-![strategy](/assets/images/jsf/advanced/strategy.png)
+![strategy](../../../assets/images/jsf/advanced/strategy.png)
 
 ```java
 public class ContextV1 {
@@ -472,9 +472,9 @@ public class HelloWorld {
 프록시 패턴은 특정 객체에 대한 접근을 하기 이전에 흐름을 가로채어 해당 객체에 대한 인터페이스 역할을 수행하게 된다.
 객체 실행에 앞서, 캐싱, 로깅, 등의 기능을 제공한다.
 
-![proxy_pattern](/assets/images/jsf/advanced/proxy_pattern.png)
+![proxy_pattern](../../../assets/images/jsf/advanced/proxy_pattern.png)
 
-![proxy_pattern2](/assets/images/jsf/advanced/proxy_pattern2.png)
+![proxy_pattern2](../../../assets/images/jsf/advanced/proxy_pattern2.png)
 
 여기서 핵심은 Subject가 인터페이스라는 점이다. 따라서, Client는 Subject에 요청을 보내게 되므로, Subject를 구현하는 Proxy가 중간에 와서 매개체 역할을 수행한다 하더라도 Client의 코드에는 수정이 필요없다.
 
@@ -529,7 +529,7 @@ void cacheProxyTest(){
 
 Proxy Server는 server 와 client 간의 네트워크 통신과정에서 중간에 위치한 서버로 server와 client 통신 과정을 중계하는 역할을 수행한다. 대표적으로 nginx webserver가 있다.
 
-![nginx_proxy_server](/assets/images/cs/nginx_proxy_server.svg)
+![nginx_proxy_server](../../../assets/images/cs/nginx_proxy_server.svg)
 
 nginx 서버를 proxy 서버로 둬서, 실제 웹서버에 대한 포트를 가리고, 정적 자원에 대해서 gzip으로 압축하고, 서버 송수신 과정을 로깅할 수 있다.
 

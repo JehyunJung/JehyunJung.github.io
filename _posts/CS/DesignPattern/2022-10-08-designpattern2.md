@@ -129,7 +129,7 @@ public class Main {
 
 ## MVC Pattern
 
-![mvc_pattern](/assets/images/jsf/mvc_pattern.png)
+![mvc_pattern](../../../assets/images/jsf/mvc_pattern.png)
 
 mvc pattern은 이전에도 다뤘듯이 위와 같은 방식으로 구조로 동작한다.
 
