@@ -1536,6 +1536,320 @@ Token Endpoint에 대한 응답이 성공적으로 이루어지면 아래와 같
 |unauthorized_client|등록된 클라이언트에서 지원하지 않는 권한 부여 유형인 경우|
 |unsupported_grant_type|인가 서버에서 지원하지 않는 권한 부여 유형인 경우|
 
+## Token Introspection Endpoint
+
+Resource Server 로부터 토큰 검증 요청할 때, 토큰에 대한 검증을 수행한다. Opaque Token에 대해 Authorization Server 내부에서 token에대한 활성화여부를 판단한다.
+
+![token_introspection_authentication](/assets/images/jsf/Spring_Security/oauth2/token_introspection_authentication.png)
+
+1. OAuth2TokenIntrospectionAuthenticationConverter를 통해 access token, token_type_hint와 같은 매개변수를 추출한다.
+
+```java
+@Override
+public Authentication convert(HttpServletRequest request) {
+    Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+
+    MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+
+    // token (REQUIRED)
+    String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);
+    if (!StringUtils.hasText(token) ||
+            parameters.get(OAuth2ParameterNames.TOKEN).size() != 1) {
+        throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN);
+    }
+
+    // token_type_hint (OPTIONAL)
+    String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames.TOKEN_TYPE_HINT);
+    if (StringUtils.hasText(tokenTypeHint) &&
+            parameters.get(OAuth2ParameterNames.TOKEN_TYPE_HINT).size() != 1) {
+        throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN_TYPE_HINT);
+    }
+
+    Map<String, Object> additionalParameters = new HashMap<>();
+    parameters.forEach((key, value) -> {
+        if (!key.equals(OAuth2ParameterNames.TOKEN) &&
+                !key.equals(OAuth2ParameterNames.TOKEN_TYPE_HINT)) {
+            additionalParameters.put(key, value.get(0));
+        }
+    });
+
+    return new OAuth2TokenIntrospectionAuthenticationToken(
+            token, clientPrincipal, tokenTypeHint, additionalParameters);
+}
+```
+
+2. OAuth2TokenIntrospectionAuthenticationProvider을 통해 해당 토큰이 활성화된 상태인지 판단한다. OAuth2Authorization에 저장된 Access Token을 통해 token의 활성화여부를 판단한다. 만료 여부, 비활성화 여부, nbf 여부에 따라서 활성화 상태가 결정된다.
+
+```java
+@Override
+public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    OAuth2TokenIntrospectionAuthenticationToken tokenIntrospectionAuthentication =
+            (OAuth2TokenIntrospectionAuthenticationToken) authentication;
+
+    OAuth2ClientAuthenticationToken clientPrincipal =
+            getAuthenticatedClientElseThrowInvalidClient(tokenIntrospectionAuthentication);
+
+    OAuth2Authorization authorization = this.authorizationService.findByToken(
+            tokenIntrospectionAuthentication.getToken(), null);
+    if (authorization == null) {
+        if (this.logger.isTraceEnabled()) {
+            this.logger.trace("Did not authenticate token introspection request since token was not found");
+        }
+        // Return the authentication request when token not found
+        return tokenIntrospectionAuthentication;
+    }
+
+    if (this.logger.isTraceEnabled()) {
+        this.logger.trace("Retrieved authorization with token");
+    }
+
+    OAuth2Authorization.Token<OAuth2Token> authorizedToken =
+            authorization.getToken(tokenIntrospectionAuthentication.getToken());
+    if (!authorizedToken.isActive()) {
+        if (this.logger.isTraceEnabled()) {
+            this.logger.trace("Did not introspect token since not active");
+        }
+        return new OAuth2TokenIntrospectionAuthenticationToken(tokenIntrospectionAuthentication.getToken(),
+                clientPrincipal, OAuth2TokenIntrospection.builder().build());
+    }
+
+    RegisteredClient authorizedClient = this.registeredClientRepository.findById(authorization.getRegisteredClientId());
+    OAuth2TokenIntrospection tokenClaims = withActiveTokenClaims(authorizedToken, authorizedClient);
+
+    if (this.logger.isTraceEnabled()) {
+        this.logger.trace("Authenticated token introspection request");
+    }
+
+    return new OAuth2TokenIntrospectionAuthenticationToken(authorizedToken.getToken().getTokenValue(),
+            clientPrincipal, tokenClaims);
+}
+```
+
+## Token Revocation Endpoint
+
+Access Token을 비활성화 작업을 처리하는 엔드포인트로, 해당 경로로 요청하게 되면 token을 비활성화시켜서 더 이상 사용할 수 없도록 한다.
+
+![token_revocation](/assets/images/jsf/Spring_Security/oauth2/token_revocation.png)
+
+1. OAuth2TokenRevocationAuthenticationConverter을 통해 token 값을 추출한다.
+
+```java
+@Override
+public Authentication convert(HttpServletRequest request) {
+    Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
+
+    MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+
+    // token (REQUIRED)
+    String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);
+    if (!StringUtils.hasText(token) ||
+            parameters.get(OAuth2ParameterNames.TOKEN).size() != 1) {
+        throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN);
+    }
+
+    // token_type_hint (OPTIONAL)
+    String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames.TOKEN_TYPE_HINT);
+    if (StringUtils.hasText(tokenTypeHint) &&
+            parameters.get(OAuth2ParameterNames.TOKEN_TYPE_HINT).size() != 1) {
+        throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN_TYPE_HINT);
+    }
+
+    return new OAuth2TokenRevocationAuthenticationToken(token, clientPrincipal, tokenTypeHint);
+}
+```
+
+2. OAuth2TokenRevocationAuthenticationProvider은 request으로 전달된 token값을 이용해서 OAuth2Authorization 내부의 Access Token 객체를 찾아서 해당 token에 대해 비활성화를 진행한다.
+
+```java
+@Override
+public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    OAuth2TokenRevocationAuthenticationToken tokenRevocationAuthentication =
+            (OAuth2TokenRevocationAuthenticationToken) authentication;
+
+    OAuth2ClientAuthenticationToken clientPrincipal =
+            getAuthenticatedClientElseThrowInvalidClient(tokenRevocationAuthentication);
+    RegisteredClient registeredClient = clientPrincipal.getRegisteredClient();
+
+    OAuth2Authorization authorization = this.authorizationService.findByToken(
+            tokenRevocationAuthentication.getToken(), null);
+    if (authorization == null) {
+        if (this.logger.isTraceEnabled()) {
+            this.logger.trace("Did not authenticate token revocation request since token was not found");
+        }
+        // Return the authentication request when token not found
+        return tokenRevocationAuthentication;
+    }
+
+    if (!registeredClient.getId().equals(authorization.getRegisteredClientId())) {
+        throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
+    }
+
+    OAuth2Authorization.Token<OAuth2Token> token = authorization.getToken(tokenRevocationAuthentication.getToken());
+    authorization = OAuth2AuthenticationProviderUtils.invalidate(authorization, token.getToken());
+    this.authorizationService.save(authorization);
+
+    if (this.logger.isTraceEnabled()) {
+        this.logger.trace("Saved authorization with revoked token");
+        // This log is kept separate for consistency with other providers
+        this.logger.trace("Authenticated token revocation request");
+    }
+
+    return new OAuth2TokenRevocationAuthenticationToken(token.getToken(), clientPrincipal);
+}
+```
+
+## Authorization Server Metadata Endpoint
+
+authorization server 에 대한 각종 메타 데이터를 반환하기 위해 존재하는 엔드포인트로, 각종 엔드포인트, 권한 부여 유형, 등 다양한 정보를 출력한다.
+
+```/.well-known/oauth-authorization-server```에 대한 접근을 요청하게 되면 아래의 OAuth2AuthorizationServerMetadataEndpointFilter가 동작하게 되며, 내부에서 각종 정보를 설정한다.
+
+```java
+@Override
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+        throws ServletException, IOException {
+
+    if (!this.requestMatcher.matches(request)) {
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
+    String issuer = authorizationServerContext.getIssuer();
+    AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
+
+    OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
+            .issuer(issuer)
+            .authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
+            .tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
+            .tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
+            .jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
+            .responseType(OAuth2AuthorizationResponseType.CODE.getValue())
+            .grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
+            .grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
+            .grantType(AuthorizationGrantType.REFRESH_TOKEN.getValue())
+            .tokenRevocationEndpoint(asUrl(issuer, authorizationServerSettings.getTokenRevocationEndpoint()))
+            .tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
+            .tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
+            .tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
+            .codeChallengeMethod("S256");
+
+    this.authorizationServerMetadataCustomizer.accept(authorizationServerMetadata);
+
+    ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+    this.authorizationServerMetadataHttpMessageConverter.write(
+            authorizationServerMetadata.build(), MediaType.APPLICATION_JSON, httpResponse);
+}
+```
+
+## JWK Set Endpoint
+
+JWK Set을 반환하는 엔드포인트로, Resource Server에서 JWT token에 대한 검증을 수행하는 과정에서 인가서버의 JWK Set Endpoint으로 JWK Set을 요청하게 된다.
+
+```/oauth2/jwks```에 대한 요청으로 NimbusJwkSetEndpointFilter가 동작하여 JWK Set을 반환한다.
+
+```java
+@Override
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+        throws ServletException, IOException {
+
+    if (!this.requestMatcher.matches(request)) {
+        filterChain.doFilter(request, response);
+        return;
+    }
+
+    JWKSet jwkSet;
+    try {
+        jwkSet = new JWKSet(this.jwkSource.get(this.jwkSelector, null));
+    }
+    catch (Exception ex) {
+        throw new IllegalStateException("Failed to select the JWK(s) -> " + ex.getMessage(), ex);
+    }
+
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    try (Writer writer = response.getWriter()) {
+        writer.write(jwkSet.toString());	// toString() excludes private keys
+    }
+}
+```
+
+## OpenID Connect 1.0 Endpoint
+
+OidcConfigurer을 통해 OpenID 기반의 엔드포인트를 원한다.
+
+```/userinfo``` 요청에 대해서 oicd 기반의 claim을 구성하여 사용자의 정보를 반환한다.
+
+![oidc_authentication](/assets/images/jsf/Spring_Security/oauth2/oidc_authentication.png)
+
+1. OidcUserInfoEndpointFilter의 경우 AuthorizationFilter 이후에 존재하기 때문에, 인증 절차를 거쳐야한다. 따라서, 아래의 설정을 추가하여 JWT 기반의 인증이 수행될 수 있도록 한다.
+
+BearerAuthenticationFilter에 의해 인증 처리가 이루어진다.
+
+```java
+httpSecurity.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+```
+
+2. 이후, OidcUserInfoEndpointFilter을 통해 access_token, openid scope를 판단하여 유저 정보를 반환하게 된다.
+
+```java
+@Override
+public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+    OidcUserInfoAuthenticationToken userInfoAuthentication =
+            (OidcUserInfoAuthenticationToken) authentication;
+
+    AbstractOAuth2TokenAuthenticationToken<?> accessTokenAuthentication = null;
+    if (AbstractOAuth2TokenAuthenticationToken.class.isAssignableFrom(userInfoAuthentication.getPrincipal().getClass())) {
+        accessTokenAuthentication = (AbstractOAuth2TokenAuthenticationToken<?>) userInfoAuthentication.getPrincipal();
+    }
+    if (accessTokenAuthentication == null || !accessTokenAuthentication.isAuthenticated()) {
+        throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+    }
+
+    String accessTokenValue = accessTokenAuthentication.getToken().getTokenValue();
+
+    OAuth2Authorization authorization = this.authorizationService.findByToken(
+            accessTokenValue, OAuth2TokenType.ACCESS_TOKEN);
+    if (authorization == null) {
+        throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+    }
+
+    if (this.logger.isTraceEnabled()) {
+        this.logger.trace("Retrieved authorization with access token");
+    }
+
+    OAuth2Authorization.Token<OAuth2AccessToken> authorizedAccessToken = authorization.getAccessToken();
+    if (!authorizedAccessToken.isActive()) {
+        throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+    }
+
+    if (!authorizedAccessToken.getToken().getScopes().contains(OidcScopes.OPENID)) {
+        throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INSUFFICIENT_SCOPE);
+    }
+
+    OAuth2Authorization.Token<OidcIdToken> idToken = authorization.getToken(OidcIdToken.class);
+    if (idToken == null) {
+        throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_TOKEN);
+    }
+
+    if (this.logger.isTraceEnabled()) {
+        this.logger.trace("Validated user info request");
+    }
+
+    OidcUserInfoAuthenticationContext authenticationContext =
+            OidcUserInfoAuthenticationContext.with(userInfoAuthentication)
+                    .accessToken(authorizedAccessToken.getToken())
+                    .authorization(authorization)
+                    .build();
+    OidcUserInfo userInfo = this.userInfoMapper.apply(authenticationContext);
+
+    if (this.logger.isTraceEnabled()) {
+        this.logger.trace("Authenticated user info request");
+    }
+
+    return new OidcUserInfoAuthenticationToken(accessTokenAuthentication, userInfo);
+}
+```
+
 ## References
 link: [inflearn](https://www.inflearn.com/course/%EC%A0%95%EC%88%98%EC%9B%90-%EC%8A%A4%ED%94%84%EB%A7%81-%EC%8B%9C%ED%81%90%EB%A6%AC%ED%8B%B0/dashboard)
 
