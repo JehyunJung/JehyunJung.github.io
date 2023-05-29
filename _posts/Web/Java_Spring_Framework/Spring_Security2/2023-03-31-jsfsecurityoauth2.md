@@ -16,16 +16,18 @@ tags:
 
 Oauth는 Open Authorization의 약어로, 클라이언트가 사용자의 정보를 가지고 있는 resource server에 대한 요청을 진행할때 사용자로부터 접근 허가를 받아 access token을 통해 사용자에 대한 정보에 접근하는 것이 가능하다. 
 
-3rd party componenet을 통해 사용자에대한 인증을 대신하기 때문에 Delegated Authorization Framework이라고도 한다.흔히, 카카오톡, 네이버, 페이스북, 등의 SNS 플랫폼을 통해 사용자를 인증하고 사용자의 개인정보에 접근한다.
+3rd party component을 통해 사용자에 대한 인증을 대신하기 때문에 Delegated Authorization Framework이라고도 한다. 흔히, 카카오톡, 네이버, 페이스북, 등의 SNS 플랫폼을 통해 사용자를 인증하고 사용자의 개인정보에 접근한다.
 
 ## Keycloak
 
 Oauth2 기반의 인증을 제공하는 keycloak를 활용하여 oauth2의 동작방식을 이해하도록 하자. 
 
 아래의 명령어를 통해 keycloak 서버를 동작시킬 수 있다.
+
 ```powershell
 /bin kc.bat start-dev 
 ```
+
 아래와 같이 client를 등록해서 관리할 수 있다.
 
 ![keycloak_client](/assets/images/jsf/Spring_Security/oauth2/keycloak_client.png)
@@ -101,10 +103,12 @@ Keycloak과 Postman을 활용하여 사용자의 정보를 얻어오는 과정�
 
 1. Authorization Code를 받아오기 위한 요청을 수행한다.
 
-response_type: code
-client_id: 클라이언트의 id
-scope: 접근하고자 하는 사용자의 리소스 종류
-redirect_url: 결과를 전달한 url
+|Parameters|Description|
+|--|--|
+|response_type|code|
+|client_id|클라이언트의 id|
+|scope|접근하고자 하는 사용자의 리소스 종류|
+|redirect_url|결과를 전달한 url|
 
 ```
 http://localhost:8080/realms/oauth2/protocol/openid-connect/auth?response_type=code&client_id=oauth2-client-app&scope=profile email&redirect_url=http://localhost:8081

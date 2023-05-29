@@ -803,7 +803,139 @@ protected void handlePreflightCORS(final HttpServletRequest request, final HttpS
 
 ```
 
+### Cors 개정 버전
 
+```java
+//CorsFilter
+@Override
+protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+        FilterChain filterChain) throws ServletException, IOException {
+
+    CorsConfiguration corsConfiguration = this.configSource.getCorsConfiguration(request);
+    boolean isValid = this.processor.processRequest(corsConfiguration, request, response);
+    if (!isValid || CorsUtils.isPreFlightRequest(request)) {
+        return;
+    }
+    filterChain.doFilter(request, response);
+}
+//DefaultCorsProcessor
+@Override
+@SuppressWarnings("resource")
+public boolean processRequest(@Nullable CorsConfiguration config, HttpServletRequest request,
+        HttpServletResponse response) throws IOException {
+
+    Collection<String> varyHeaders = response.getHeaders(HttpHeaders.VARY);
+    if (!varyHeaders.contains(HttpHeaders.ORIGIN)) {
+        response.addHeader(HttpHeaders.VARY, HttpHeaders.ORIGIN);
+    }
+    if (!varyHeaders.contains(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD)) {
+        response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD);
+    }
+    if (!varyHeaders.contains(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS)) {
+        response.addHeader(HttpHeaders.VARY, HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS);
+    }
+
+    if (!CorsUtils.isCorsRequest(request)) {
+        return true;
+    }
+
+    if (response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN) != null) {
+        logger.trace("Skip: response already contains \"Access-Control-Allow-Origin\"");
+        return true;
+    }
+
+    boolean preFlightRequest = CorsUtils.isPreFlightRequest(request);
+    if (config == null) {
+        if (preFlightRequest) {
+            rejectRequest(new ServletServerHttpResponse(response));
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    return handleInternal(new ServletServerHttpRequest(request), new ServletServerHttpResponse(response), config, preFlightRequest);
+}
+
+protected void rejectRequest(ServerHttpResponse response) throws IOException {
+    response.setStatusCode(HttpStatus.FORBIDDEN);
+    response.getBody().write("Invalid CORS request".getBytes(StandardCharsets.UTF_8));
+    response.flush();
+}
+
+protected boolean handleInternal(ServerHttpRequest request, ServerHttpResponse response,
+        CorsConfiguration config, boolean preFlightRequest) throws IOException {
+
+    String requestOrigin = request.getHeaders().getOrigin();
+    String allowOrigin = checkOrigin(config, requestOrigin);
+    HttpHeaders responseHeaders = response.getHeaders();
+
+    if (allowOrigin == null) {
+        logger.debug("Reject: '" + requestOrigin + "' origin is not allowed");
+        rejectRequest(response);
+        return false;
+    }
+
+    HttpMethod requestMethod = getMethodToUse(request, preFlightRequest);
+    List<HttpMethod> allowMethods = checkMethods(config, requestMethod);
+    if (allowMethods == null) {
+        logger.debug("Reject: HTTP '" + requestMethod + "' is not allowed");
+        rejectRequest(response);
+        return false;
+    }
+
+    List<String> requestHeaders = getHeadersToUse(request, preFlightRequest);
+    List<String> allowHeaders = checkHeaders(config, requestHeaders);
+    if (preFlightRequest && allowHeaders == null) {
+        logger.debug("Reject: headers '" + requestHeaders + "' are not allowed");
+        rejectRequest(response);
+        return false;
+    }
+
+    responseHeaders.setAccessControlAllowOrigin(allowOrigin);
+
+    if (preFlightRequest) {
+        responseHeaders.setAccessControlAllowMethods(allowMethods);
+    }
+
+    if (preFlightRequest && !allowHeaders.isEmpty()) {
+        responseHeaders.setAccessControlAllowHeaders(allowHeaders);
+    }
+
+    if (!CollectionUtils.isEmpty(config.getExposedHeaders())) {
+        responseHeaders.setAccessControlExposeHeaders(config.getExposedHeaders());
+    }
+
+    if (Boolean.TRUE.equals(config.getAllowCredentials())) {
+        responseHeaders.setAccessControlAllowCredentials(true);
+    }
+
+    if (preFlightRequest && config.getMaxAge() != null) {
+        responseHeaders.setAccessControlMaxAge(config.getMaxAge());
+    }
+
+    response.flush();
+    return true;
+}
+```
+
+> Preflight 처리
+
+```java
+boolean preFlightRequest = CorsUtils.isPreFlightRequest(request);
+    if (config == null) {
+        if (preFlightRequest) {
+            rejectRequest(new ServletServerHttpResponse(response));
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+```
+
+CorsConfiguration을 지정하지 않았지만, Preflight 처리가 요구되면 접근을 제한하도록 한다. 따라서, Preflight 요청을 위해서는 CorsConfiguration에 대한 처리가 필요하다.
 
 
 

@@ -101,7 +101,7 @@ POST 방식으로 요청을 수행하게 되면 아래와 같이 access token과
 
 ## Implicit Grant Type
 
-해당 권한 부여방식의 경우 Javascript, Andriod, IOS와 같은 클라이언트 측에서 수행하는 권한 인증으로 GET 방식을 통해 바로 access tokend을 부여받는다. Back Channel이 없기 때문에 기밀성이 유지되지 않아 client secret과 같은 비밀키의 사용이 안된다.
+해당 권한 부여방식의 경우 Javascript, Andriod, IOS와 같은 클라이언트 측에서 수행하는 권한 인증으로 GET 방식을 통해 바로 access token을 부여받는다. Back Channel이 없기 때문에 기밀성이 유지되지 않아 client secret과 같은 비밀키의 사용이 안된다.
 
 아래의 매개변수들이 활용된다.
 
@@ -128,7 +128,7 @@ http://localhost:8081/#session_state=57e167ca-d626-4313-a9d7-b264a54014a4&access
 
 ### Flow
 
-![implicit_grant_flow](/assets/images/jsf/Spring_Security/oauth2/implicit_grant_flow)
+![implicit_grant_flow](/assets/images/jsf/Spring_Security/oauth2/implicit_grant_flow.png)
 
 ## Resource Owner Grant Type
 
@@ -230,7 +230,7 @@ Access Token이 만료된 경우, Refresh Token을 활용하여 다시 유효한
 
 아래와 같이 POST 요청을 통해 Access Token을 반환받게 된다. 이때, Refresh Token 또한 추가로 발급된다.
 
-![refresh_token_grant2.png](/assets/images/jsf/Spring_Security/oauth2/refresh_token_grant2.png.png)
+![refresh_token_grant2.png](/assets/images/jsf/Spring_Security/oauth2/refresh_token_grant2.png)
 
 ```json
 {
