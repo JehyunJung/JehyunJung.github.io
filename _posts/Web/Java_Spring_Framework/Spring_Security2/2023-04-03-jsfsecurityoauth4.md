@@ -375,6 +375,7 @@ private static ClientRegistration getClientRegistration(String registrationId,
 등록한 issueruri을 활용하여 end-point에 대한 정보를 저장되어 있는 url에 각종 정보를 요청한다.
 
 oidc: {issuerUri}/.well-known/openid-configuration
+
 auth: {issuerUri}/.well-known/oauth-authorization-server
 
 와 같이 uri를 생성하여 해당 uri로의 요청을 통해 메타 데이터를 추출한다.
