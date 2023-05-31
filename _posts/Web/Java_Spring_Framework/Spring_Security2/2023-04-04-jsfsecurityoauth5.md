@@ -554,7 +554,7 @@ public class OAuth2AuthorizedClient implements Serializable {
 
 > DefaultOAuth2UserService
 
-표준 OAuth2 Prodiver 인증 방식으로 OAtuh2User 유저를 활용하여 관리하게 된다.
+표준 OAuth2 Prodiver 인증 방식으로 OAuth2User 유저를 활용하여 관리하게 된다.
 
 > OidcUserService
 
