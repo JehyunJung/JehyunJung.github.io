@@ -50,6 +50,8 @@ docs:
     children: 
       - title: "Kubernetes"
         url: /tags/kubernetes/
+      - title: "AWS"
+        url: /tags/aws/
   - title: "Code Test Practice"
     children:
       - title: "Implementation"
