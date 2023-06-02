@@ -19,7 +19,9 @@ Google, Naver, Kakao 와 같은 소셜 로그인을 지원하기 위한 작업 �
 아래의 사이트들을 통해 OAuth2 인증을 위한 Application을 생성한다.
 
 Google: https://console.cloud.google.com/
+
 Naver: https://developers.naver.com/main/
+
 Kakao: https://developers.kakao.com/
 
 이후, client_id, client_secret, oauth2 provider에 대한 endpoint을 등록한다.
