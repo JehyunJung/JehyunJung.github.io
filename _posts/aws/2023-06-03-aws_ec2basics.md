@@ -47,6 +47,8 @@ EC2 Instance가 처음 실행될때에만 실행되는 명령어로, 초기에 �
 yum update -y
 yum install -y httpd
 systemctl start httpd
+systemctl enable httpd
+echo "<h1>Hello World from $(hostname -f)</h1>" > /var/www/html/index.html
 ```
 
 ## Instance Types
