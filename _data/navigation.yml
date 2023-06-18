@@ -7,7 +7,7 @@ main:
   - title: "Projects"
     url: /category/project/
   - title: "CS"
-    url: /category/CS/
+    url: /tags/CS/
   - title: "PostByTags"
     url: /tags/
   # - title: "About"
