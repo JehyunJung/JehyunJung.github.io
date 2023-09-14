@@ -32,4 +32,4 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 11)
 source ~/.zshrc
 ```
 
-영구적으로 적용하고자 하면 ~/.bash_profile 이나 ~/.zshrc에 위의 export 명령문을 추가한다.
+영구적으로 적용하고자 하면 ~/.bash_profile 이나 ~/.zshrc에 위의 export 명령문을 추가한.다
